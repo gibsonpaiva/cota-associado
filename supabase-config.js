@@ -4,6 +4,12 @@ const SUPABASE_CONFIG = {
   publishableKey: 'sb_publishable_154zsERKBGrEzzDrRA4CfQ_dZz2G3so'
 };
 
+// Configuração do Webhook N8N para Notificações (Telegram & Gmail)
+const N8N_CONFIG = {
+  // URL do webhook do N8N (pode ser preenchida aqui ou salva pelo painel admin)
+  webhookUrl: localStorage.getItem('valoriza_n8n_webhook_url') || ''
+};
+
 // Inicializa a instância do Supabase caso a biblioteca JS esteja carregada
 let supabaseClient = null;
 if (window.supabase && typeof window.supabase.createClient === 'function') {

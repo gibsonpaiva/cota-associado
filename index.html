@@ -1611,6 +1611,46 @@
       }
     }
 
+    // Enviar dados para o Webhook do N8N (Notificações Telegram e Gmail)
+    async function sendToN8nWebhook(payload) {
+      const webhookUrl = (typeof N8N_CONFIG !== 'undefined' && N8N_CONFIG.webhookUrl) 
+        || localStorage.getItem('valoriza_n8n_webhook_url');
+
+      if (!webhookUrl || !webhookUrl.startsWith('http')) {
+        console.log('ℹ️ Webhook do N8N não configurado. Se desejar alertas no Telegram/Gmail, configure a URL do webhook.');
+        return;
+      }
+
+      try {
+        const cleanPhone = (payload.whatsapp || '').replace(/\D/g, '');
+        const intlPhone = cleanPhone.length === 10 || cleanPhone.length === 11 ? '55' + cleanPhone : cleanPhone;
+        
+        const enrichedPayload = {
+          ...payload,
+          whatsapp_link: `https://wa.me/${intlPhone}`,
+          valor_total_formatado: `R$ ${formatCurrencyNumber(payload.valor_total)}/mês`,
+          data_hora: new Date().toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo' }),
+          opcionais_texto: Array.isArray(payload.opcionais) && payload.opcionais.length > 0
+            ? payload.opcionais.map(o => `• ${o.title} (+R$ ${formatCurrencyNumber(o.price)}/mês)`).join('\n')
+            : 'Nenhum opcional selecionado'
+        };
+
+        console.log('🚀 Enviando cotação para o Webhook N8N...');
+        fetch(webhookUrl, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(enrichedPayload),
+          mode: 'no-cors'
+        }).then(() => {
+          console.log('✓ Disparado com sucesso para o N8N!');
+        }).catch(err => {
+          console.warn('Aviso no disparo para o N8N:', err);
+        });
+      } catch (err) {
+        console.warn('Erro ao preparar payload do N8N:', err);
+      }
+    }
+
     // Dispara abertura do WhatsApp com mensagem pré-formatada e salva no Supabase
     function handleSendToWhatsApp(mode = 'contratar') {
       if (!validateUserData()) {
@@ -1622,8 +1662,7 @@
       const cpfVal = cpfInput.value.trim();
       const planData = recalculatePlan();
 
-      // Salva no banco de dados Supabase em segundo plano
-      saveQuoteToSupabase({
+      const payload = {
         nome: nameVal,
         whatsapp: phoneVal,
         cpf: cpfVal,
@@ -1634,7 +1673,13 @@
         opcionais: planData.selectedExtras,
         valor_total: planData.totalMonthly,
         status: 'Novo'
-      });
+      };
+
+      // 1. Salva no banco de dados Supabase em segundo plano
+      saveQuoteToSupabase(payload);
+
+      // 2. Dispara webhook do N8N para notificações no Telegram e Gmail
+      sendToN8nWebhook(payload);
 
       const headerIntro = mode === 'consultor'
         ? `Olá! Gostaria de falar com um consultor da *Valoriza Car* sobre a proteção veicular que montei no site:`

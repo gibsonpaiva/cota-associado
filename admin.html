@@ -188,6 +188,16 @@
           <svg class="w-4 h-4 text-valoriza-yellow" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
           <span>Exportar CSV</span>
         </button>
+
+        <button 
+          type="button" 
+          id="open-n8n-modal-btn" 
+          class="py-2.5 px-3.5 rounded-xl border border-purple-200 bg-purple-50/80 hover:bg-purple-100 text-purple-700 font-semibold text-xs sm:text-sm transition-all flex items-center gap-2 shadow-xs"
+          title="Configurar Webhook N8N para Telegram & Gmail"
+        >
+          <svg class="w-4 h-4 text-purple-600" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+          <span>Webhook N8N</span>
+        </button>
       </div>
     </div>
 
@@ -448,6 +458,80 @@
       <div class="p-4 bg-slate-50 border-t border-slate-200 flex justify-end">
         <button type="button" id="close-sql-modal-bottom-btn" class="py-2.5 px-5 rounded-xl bg-valoriza-dark text-white font-heading font-semibold text-xs">
           Entendi, já executei
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==========================================
+       MODAL DE CONFIGURAÇÃO DO WEBHOOK N8N
+       ========================================== -->
+  <div id="n8n-modal" class="fixed inset-0 z-50 hidden flex items-center justify-center p-4" aria-hidden="true">
+    <div id="n8n-backdrop" class="fixed inset-0 bg-valoriza-dark/60 backdrop-blur-xs transition-opacity"></div>
+    <div class="relative bg-white rounded-3xl max-w-lg w-full shadow-float overflow-hidden z-10 max-h-[90vh] flex flex-col">
+      <div class="p-5 border-b border-slate-100 flex items-center justify-between bg-purple-50/80">
+        <div class="flex items-center gap-2.5">
+          <div class="w-9 h-9 rounded-xl bg-purple-600 text-white flex items-center justify-center shadow-xs">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+          </div>
+          <div>
+            <span class="text-[10px] font-heading font-bold uppercase tracking-wider text-purple-700 block">Automação de Notificações</span>
+            <h3 class="font-heading text-base sm:text-lg font-bold text-valoriza-dark">Webhook N8N (Telegram & Gmail)</h3>
+          </div>
+        </div>
+        <button type="button" id="close-n8n-btn" class="w-8 h-8 rounded-full bg-white text-valoriza-slate flex items-center justify-center hover:bg-slate-200">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+        </button>
+      </div>
+
+      <div class="p-5 overflow-y-auto space-y-4 custom-scrollbar text-xs sm:text-sm">
+        <p class="text-valoriza-slate leading-relaxed">
+          Cole a URL gerada pelo nó <strong>Webhook</strong> do seu fluxo no N8N. Sempre que um cliente clicar em contratar, o site disparará os dados para esta URL em tempo real.
+        </p>
+
+        <div>
+          <label for="n8n-url-input" class="block font-semibold text-valoriza-dark mb-1.5">
+            URL do Webhook N8N:
+          </label>
+          <input 
+            type="url" 
+            id="n8n-url-input" 
+            placeholder="https://seu-n8n.com/webhook/cota-valorizacar"
+            class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 bg-slate-50 text-xs sm:text-sm font-mono text-valoriza-dark focus:outline-none focus:ring-2 focus:ring-purple-400 focus:bg-white transition-all"
+          />
+          <p class="text-[11px] text-valoriza-muted mt-1.5">
+            Exemplo: <code>https://n8n.seusite.com/webhook/cota-valorizacar</code>
+          </p>
+        </div>
+
+        <div class="p-3.5 bg-slate-50 rounded-2xl border border-slate-200/80 space-y-2">
+          <span class="font-semibold text-valoriza-dark block text-xs">📦 Fluxo N8N Pronto:</span>
+          <p class="text-[11px] text-valoriza-muted">
+            O arquivo <strong class="text-valoriza-dark">n8n-workflow-cota-associado.json</strong> já está na raiz do seu projeto. Basta abri-lo, copiar e colar no seu N8N!
+          </p>
+        </div>
+
+        <div id="n8n-save-alert" class="hidden p-3 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs flex items-center gap-2">
+          <svg class="w-4 h-4 text-emerald-600" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
+          <span>Webhook salvo com sucesso! Já está ativo na landing page.</span>
+        </div>
+      </div>
+
+      <div class="p-4 bg-slate-50 border-t border-slate-200 flex items-center justify-between">
+        <button 
+          type="button" 
+          id="test-n8n-webhook-btn" 
+          class="py-2.5 px-3 rounded-xl border border-slate-200 bg-white hover:bg-slate-100 text-valoriza-dark font-semibold text-xs transition-colors flex items-center gap-1.5"
+        >
+          <span id="test-n8n-text">Disparar Teste</span>
+        </button>
+
+        <button 
+          type="button" 
+          id="save-n8n-url-btn" 
+          class="py-2.5 px-5 rounded-xl bg-purple-600 hover:bg-purple-700 text-white font-heading font-semibold text-xs transition-all shadow-sm"
+        >
+          Salvar URL
         </button>
       </div>
     </div>
@@ -1041,7 +1125,88 @@
       });
     });
 
-    // 10. Atualização em Tempo Real (Supabase Realtime)
+    // 10. Modal do Webhook N8N (Telegram & Gmail)
+    const openN8nModalBtn = document.getElementById('open-n8n-modal-btn');
+    const n8nModal = document.getElementById('n8n-modal');
+    const n8nBackdrop = document.getElementById('n8n-backdrop');
+    const closeN8nBtn = document.getElementById('close-n8n-btn');
+    const n8nUrlInput = document.getElementById('n8n-url-input');
+    const saveN8nUrlBtn = document.getElementById('save-n8n-url-btn');
+    const testN8nWebhookBtn = document.getElementById('test-n8n-webhook-btn');
+    const testN8nText = document.getElementById('test-n8n-text');
+    const n8nSaveAlert = document.getElementById('n8n-save-alert');
+
+    function openN8nModal() {
+      const currentUrl = localStorage.getItem('valoriza_n8n_webhook_url') 
+        || (typeof N8N_CONFIG !== 'undefined' ? N8N_CONFIG.webhookUrl : '');
+      n8nUrlInput.value = currentUrl;
+      n8nSaveAlert.classList.add('hidden');
+      n8nModal.classList.remove('hidden');
+    }
+    function closeN8nModal() {
+      n8nModal.classList.add('hidden');
+    }
+
+    openN8nModalBtn.addEventListener('click', openN8nModal);
+    closeN8nBtn.addEventListener('click', closeN8nModal);
+    n8nBackdrop.addEventListener('click', closeN8nModal);
+
+    saveN8nUrlBtn.addEventListener('click', () => {
+      const url = n8nUrlInput.value.trim();
+      localStorage.setItem('valoriza_n8n_webhook_url', url);
+      if (typeof N8N_CONFIG !== 'undefined') {
+        N8N_CONFIG.webhookUrl = url;
+      }
+      n8nSaveAlert.classList.remove('hidden');
+      setTimeout(() => {
+        n8nSaveAlert.classList.add('hidden');
+      }, 3000);
+    });
+
+    testN8nWebhookBtn.addEventListener('click', async () => {
+      const url = n8nUrlInput.value.trim();
+      if (!url || !url.startsWith('http')) {
+        alert('Por favor, informe a URL do Webhook do N8N antes de testar.');
+        return;
+      }
+      testN8nText.textContent = 'Enviando teste...';
+
+      const samplePayload = {
+        nome: 'Lead de Teste N8N',
+        whatsapp: '(31) 99999-8888',
+        whatsapp_link: 'https://wa.me/5531999998888',
+        cpf: '123.456.789-00',
+        fipe_faixa: 'Até R$ 50 mil',
+        fipe_adicional: 0,
+        reboque: 'Guincho 500 km',
+        reboque_valor: 29.90,
+        opcionais: [
+          { id: 'vidros', title: 'Proteção de Vidros Completa', price: 19.90 },
+          { id: 'reserva-7', title: 'Carro Reserva 7 dias', price: 18.00 }
+        ],
+        opcionais_texto: '• Proteção de Vidros Completa (+R$ 19,90/mês)\n• Carro Reserva 7 dias (+R$ 18,00/mês)',
+        valor_total: 167.80,
+        valor_total_formatado: 'R$ 167,80/mês',
+        data_hora: new Date().toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo' }),
+        status: 'Teste'
+      };
+
+      try {
+        await fetch(url, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(samplePayload),
+          mode: 'no-cors'
+        });
+        testN8nText.textContent = '✓ Teste Enviado!';
+        setTimeout(() => { testN8nText.textContent = 'Disparar Teste'; }, 3000);
+      } catch (err) {
+        alert('Erro ao disparar para o N8N: ' + err.message);
+        testN8nText.textContent = 'Disparar Teste';
+      }
+    });
+
+    // 11. Atualização em Tempo Real (Supabase Realtime)
     function subscribeToRealtime() {
       if (!supabaseClient) return;
 
