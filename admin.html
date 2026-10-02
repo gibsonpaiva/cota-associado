@@ -1,0 +1,1076 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Valoriza Car | Painel de Cotações</title>
+  <link rel="icon" href="https://valorizacar.com.br/wp-content/uploads/2020/05/cropped-Sem-Título-1-32x32.png" sizes="32x32" />
+  <link rel="icon" href="https://valorizacar.com.br/wp-content/uploads/2020/05/cropped-Sem-Título-1-192x192.png" sizes="192x192" />
+
+  <!-- Google Fonts: Poppins & Montserrat -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+  <!-- Tailwind CSS via CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            valoriza: {
+              blue: '#0095D9',
+              blueDark: '#0077B3',
+              blueDeep: '#0087CA',
+              blueLight: '#EBF7FC',
+              yellow: '#FECA0A',
+              yellowDark: '#E3AD32',
+              dark: '#1B252F',
+              charcoal: '#1C1C1C',
+              slate: '#54595F',
+              muted: '#7A7A7A',
+              green: '#23A455',
+              greenLight: '#61CE70',
+              bg: '#F7F9FC'
+            }
+          },
+          fontFamily: {
+            heading: ['Poppins', 'sans-serif'],
+            sans: ['Montserrat', 'sans-serif'],
+          },
+          boxShadow: {
+            'card': '0 4px 20px -2px rgba(27, 37, 47, 0.05), 0 1px 3px -1px rgba(27, 37, 47, 0.03)',
+            'float': '0 20px 40px -10px rgba(27, 37, 47, 0.12)'
+          }
+        }
+      }
+    }
+  </script>
+
+  <!-- Supabase JS Client & Configuração -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="supabase-config.js"></script>
+
+  <style>
+    body {
+      font-family: 'Montserrat', sans-serif;
+      color: #1C1C1C;
+      background-color: #F7F9FC;
+      -webkit-font-smoothing: antialiased;
+    }
+    h1, h2, h3, h4, .font-heading {
+      font-family: 'Poppins', sans-serif;
+    }
+    .custom-scrollbar::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    .custom-scrollbar::-webkit-scrollbar-track {
+      background: transparent;
+    }
+    .custom-scrollbar::-webkit-scrollbar-thumb {
+      background: #CBD5E1;
+      border-radius: 9999px;
+    }
+  </style>
+</head>
+<body class="min-h-screen flex flex-col bg-valoriza-bg selection:bg-valoriza-blue selection:text-white">
+
+  <!-- Top Navbar Administrativo -->
+  <nav class="bg-white border-b border-slate-200/90 sticky top-0 z-30 shadow-xs">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-18 py-3 flex items-center justify-between gap-4">
+      
+      <!-- Marca e Identidade -->
+      <div class="flex items-center gap-3">
+        <a href="index.html" class="flex items-center gap-2 group">
+          <img 
+            src="https://valorizacar.com.br/wp-content/uploads/2023/08/cropped-LOGO-VALORIZa.png" 
+            alt="Valoriza Car" 
+            class="h-9 sm:h-10 w-auto object-contain"
+            onerror="this.style.display='none'; document.getElementById('nav-fallback-logo').classList.remove('hidden');"
+          />
+          <div id="nav-fallback-logo" class="hidden items-center gap-2">
+            <div class="w-8 h-8 rounded-lg bg-valoriza-blue text-valoriza-yellow font-heading font-extrabold flex items-center justify-center text-sm">V</div>
+            <span class="font-heading font-bold text-base text-valoriza-blue">VALORIZA</span>
+          </div>
+        </a>
+        <span class="hidden md:inline-block text-slate-300">|</span>
+        <span class="hidden md:inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-valoriza-blueLight text-valoriza-blueDark border border-valoriza-blue/20">
+          <span class="w-2 h-2 rounded-full bg-valoriza-green"></span>
+          Painel de Cotações
+        </span>
+      </div>
+
+      <!-- Links & Ações do Usuário -->
+      <div class="flex items-center gap-2.5 sm:gap-4">
+        <a 
+          href="index.html" 
+          target="_blank"
+          class="hidden sm:flex items-center gap-1.5 text-xs font-semibold text-valoriza-slate hover:text-valoriza-blue transition-colors py-2 px-3 rounded-xl hover:bg-slate-100"
+          title="Abrir o simulador do cliente em nova aba"
+        >
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg>
+          <span>Ver Simulador</span>
+        </a>
+
+        <!-- Perfil do Usuário Logado -->
+        <div class="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-slate-100 text-xs font-medium text-valoriza-dark">
+          <div class="w-6 h-6 rounded-full bg-valoriza-blue text-white flex items-center justify-center font-bold text-[10px]">
+            C
+          </div>
+          <span id="user-display-email" class="max-w-[130px] sm:max-w-[180px] truncate">carregando...</span>
+        </div>
+
+        <!-- Botão Logout -->
+        <button 
+          type="button" 
+          id="logout-btn" 
+          class="text-xs font-semibold text-red-600 hover:text-red-700 bg-red-50 hover:bg-red-100 px-3 py-2 rounded-xl transition-colors flex items-center gap-1.5"
+          title="Encerrar sessão"
+        >
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/></svg>
+          <span class="hidden sm:inline">Sair</span>
+        </button>
+      </div>
+
+    </div>
+  </nav>
+
+  <!-- Banner de Aviso caso o banco precise de Setup SQL -->
+  <div id="setup-sql-banner" class="hidden bg-amber-50 border-b border-amber-200 text-amber-900 px-4 py-3.5">
+    <div class="max-w-7xl mx-auto flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs sm:text-sm">
+      <div class="flex items-start sm:items-center gap-2.5">
+        <svg class="w-5 h-5 text-amber-600 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+        </svg>
+        <div>
+          <strong class="font-bold">Atenção:</strong> A tabela <code class="font-mono bg-amber-100 px-1 py-0.5 rounded text-amber-950 font-bold">cotacoes</code> ainda não foi criada no seu Supabase.
+          <span class="block sm:inline sm:ml-1 text-amber-800">Basta rodar o script SQL de 1 clique no Supabase SQL Editor.</span>
+        </div>
+      </div>
+      <button 
+        type="button" 
+        id="open-sql-modal-btn"
+        class="self-start sm:self-auto px-3.5 py-1.5 rounded-lg bg-amber-600 hover:bg-amber-700 text-white font-heading font-semibold text-xs transition-colors shrink-0 shadow-xs"
+      >
+        Ver & Copiar Código SQL
+      </button>
+    </div>
+  </div>
+
+  <!-- Conteúdo Principal -->
+  <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 flex-1 w-full space-y-6">
+
+    <!-- Cabeçalho com Título & Ações Rápidas -->
+    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      <div>
+        <h1 class="font-heading text-2xl sm:text-3xl font-bold text-valoriza-dark">Cotações Recebidas</h1>
+        <p class="text-xs sm:text-sm text-valoriza-muted mt-0.5">Leads capturados em tempo real na landing page</p>
+      </div>
+
+      <div class="flex items-center gap-2.5">
+        <button 
+          type="button" 
+          id="refresh-btn" 
+          class="py-2.5 px-3.5 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-valoriza-slate hover:text-valoriza-blue font-semibold text-xs sm:text-sm transition-all flex items-center gap-2 shadow-xs"
+          title="Recarregar cotações"
+        >
+          <svg id="refresh-icon" class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+          <span>Atualizar</span>
+        </button>
+
+        <button 
+          type="button" 
+          id="export-csv-btn" 
+          class="py-2.5 px-4 rounded-xl bg-valoriza-dark hover:bg-[#253340] text-white font-heading font-semibold text-xs sm:text-sm transition-all flex items-center gap-2 shadow-xs"
+        >
+          <svg class="w-4 h-4 text-valoriza-yellow" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+          <span>Exportar CSV</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Cards de Métricas (KPIs) -->
+    <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-5">
+      <!-- Total -->
+      <div class="bg-white rounded-2xl p-4 sm:p-5 border border-slate-200/90 shadow-card">
+        <div class="flex items-center justify-between text-slate-400 mb-2">
+          <span class="text-xs font-semibold text-valoriza-slate">Total de Cotações</span>
+          <div class="w-7 h-7 rounded-lg bg-slate-100 text-valoriza-blue flex items-center justify-center">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
+          </div>
+        </div>
+        <div class="font-heading text-2xl sm:text-3xl font-extrabold text-valoriza-dark" id="kpi-total">0</div>
+        <p class="text-[11px] text-valoriza-muted mt-1">Registros totais no sistema</p>
+      </div>
+
+      <!-- Novas / Pendentes -->
+      <div class="bg-white rounded-2xl p-4 sm:p-5 border border-slate-200/90 shadow-card">
+        <div class="flex items-center justify-between text-slate-400 mb-2">
+          <span class="text-xs font-semibold text-valoriza-slate">Novas / A Contatar</span>
+          <div class="w-7 h-7 rounded-lg bg-valoriza-blueLight text-valoriza-blue flex items-center justify-center">
+            <span class="w-2.5 h-2.5 rounded-full bg-valoriza-blue animate-pulse"></span>
+          </div>
+        </div>
+        <div class="font-heading text-2xl sm:text-3xl font-extrabold text-valoriza-blue" id="kpi-new">0</div>
+        <p class="text-[11px] text-valoriza-muted mt-1">Aguardando primeiro contato</p>
+      </div>
+
+      <!-- Cotações Hoje -->
+      <div class="bg-white rounded-2xl p-4 sm:p-5 border border-slate-200/90 shadow-card">
+        <div class="flex items-center justify-between text-slate-400 mb-2">
+          <span class="text-xs font-semibold text-valoriza-slate">Cotações Hoje</span>
+          <div class="w-7 h-7 rounded-lg bg-amber-50 text-amber-600 flex items-center justify-center">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+          </div>
+        </div>
+        <div class="font-heading text-2xl sm:text-3xl font-extrabold text-valoriza-dark" id="kpi-today">0</div>
+        <p class="text-[11px] text-valoriza-muted mt-1">Simulações nas últimas 24h</p>
+      </div>
+
+      <!-- Ticket Médio -->
+      <div class="bg-white rounded-2xl p-4 sm:p-5 border border-slate-200/90 shadow-card">
+        <div class="flex items-center justify-between text-slate-400 mb-2">
+          <span class="text-xs font-semibold text-valoriza-slate">Mensalidade Média</span>
+          <div class="w-7 h-7 rounded-lg bg-emerald-50 text-valoriza-green flex items-center justify-center font-bold text-xs">
+            R$
+          </div>
+        </div>
+        <div class="font-heading text-2xl sm:text-3xl font-extrabold text-valoriza-green" id="kpi-avg">R$ 0,00</div>
+        <p class="text-[11px] text-valoriza-muted mt-1">Valor médio por cotação</p>
+      </div>
+    </div>
+
+    <!-- Barra de Filtros e Busca -->
+    <div class="bg-white rounded-2xl p-4 border border-slate-200/90 shadow-card flex flex-col md:flex-row items-center justify-between gap-3.5">
+      
+      <!-- Campo de Busca -->
+      <div class="w-full md:w-80 relative">
+        <span class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+        </span>
+        <input 
+          type="text" 
+          id="search-input" 
+          placeholder="Buscar por Nome, CPF ou WhatsApp..." 
+          class="w-full pl-10 pr-4 py-2.5 rounded-xl border border-slate-200 bg-slate-50/60 focus:bg-white text-xs sm:text-sm text-valoriza-dark placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-valoriza-blue/25 focus:border-valoriza-blue transition-all"
+        />
+      </div>
+
+      <!-- Filtros Dropdowns -->
+      <div class="w-full md:w-auto flex flex-wrap items-center gap-2.5 justify-start md:justify-end">
+        <!-- Status -->
+        <select 
+          id="status-filter" 
+          class="py-2.5 px-3 rounded-xl border border-slate-200 bg-slate-50/60 text-xs font-semibold text-valoriza-slate focus:outline-none focus:ring-2 focus:ring-valoriza-blue/25 cursor-pointer"
+        >
+          <option value="ALL">Status: Todos</option>
+          <option value="Novo">Status: Novo</option>
+          <option value="Em Contato">Status: Em Contato</option>
+          <option value="Fechado">Status: Fechado</option>
+          <option value="Cancelado">Status: Cancelado</option>
+        </select>
+
+        <!-- Faixa FIPE -->
+        <select 
+          id="fipe-filter" 
+          class="py-2.5 px-3 rounded-xl border border-slate-200 bg-slate-50/60 text-xs font-semibold text-valoriza-slate focus:outline-none focus:ring-2 focus:ring-valoriza-blue/25 cursor-pointer"
+        >
+          <option value="ALL">FIPE: Todas as faixas</option>
+          <option value="Até R$ 30 mil">Até R$ 30 mil</option>
+          <option value="Até R$ 50 mil">Até R$ 50 mil</option>
+          <option value="R$ 50 mil a R$ 80 mil">R$ 50k a 80k</option>
+          <option value="Acima de R$ 80 mil">Acima de R$ 80k</option>
+        </select>
+
+        <!-- Ordenação -->
+        <select 
+          id="sort-filter" 
+          class="py-2.5 px-3 rounded-xl border border-slate-200 bg-slate-50/60 text-xs font-semibold text-valoriza-slate focus:outline-none focus:ring-2 focus:ring-valoriza-blue/25 cursor-pointer"
+        >
+          <option value="recent">Mais recentes primeiro</option>
+          <option value="oldest">Mais antigas primeiro</option>
+          <option value="highest">Maior valor mensal</option>
+          <option value="lowest">Menor valor mensal</option>
+        </select>
+      </div>
+
+    </div>
+
+    <!-- Tabela de Cotações (Desktop) e Lista de Cards (Mobile) -->
+    <div class="bg-white rounded-2xl border border-slate-200/90 shadow-card overflow-hidden">
+      
+      <!-- Estado de Carregamento -->
+      <div id="loading-state" class="py-16 text-center">
+        <svg class="w-8 h-8 text-valoriza-blue animate-spin mx-auto mb-3" fill="none" viewBox="0 0 24 24">
+          <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+          <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path>
+        </svg>
+        <p class="text-sm font-semibold text-valoriza-dark">Buscando cotações no Supabase...</p>
+      </div>
+
+      <!-- Estado Vazio -->
+      <div id="empty-state" class="hidden py-16 px-4 text-center">
+        <div class="w-14 h-14 rounded-2xl bg-slate-100 text-slate-400 flex items-center justify-center mx-auto mb-3">
+          <svg class="w-7 h-7" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+        </div>
+        <h3 class="font-heading text-base font-bold text-valoriza-dark">Nenhuma cotação encontrada</h3>
+        <p class="text-xs sm:text-sm text-valoriza-muted max-w-sm mx-auto mt-1" id="empty-state-desc">
+          Assim que os visitantes simularem planos na página inicial, as cotações completas aparecerão aqui em tempo real.
+        </p>
+        <div class="mt-5">
+          <a href="index.html" target="_blank" class="inline-flex items-center gap-1.5 py-2 px-4 rounded-xl bg-valoriza-blue hover:bg-valoriza-blueDark text-white font-heading font-semibold text-xs transition-all shadow-xs">
+            <span>Fazer uma Cotação de Teste</span>
+            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>
+          </a>
+        </div>
+      </div>
+
+      <!-- Tabela (Desktop) -->
+      <div id="table-container" class="hidden overflow-x-auto custom-scrollbar">
+        <table class="w-full text-left border-collapse text-xs sm:text-sm">
+          <thead>
+            <tr class="bg-slate-50/90 border-b border-slate-200 text-slate-500 font-heading text-[11px] uppercase tracking-wider">
+              <th class="py-3.5 px-4 font-semibold">Data / Hora</th>
+              <th class="py-3.5 px-4 font-semibold">Cliente & CPF</th>
+              <th class="py-3.5 px-4 font-semibold">WhatsApp</th>
+              <th class="py-3.5 px-4 font-semibold">Veículo / Reboque</th>
+              <th class="py-3.5 px-4 font-semibold">Opcionais</th>
+              <th class="py-3.5 px-4 font-semibold">Total / Mês</th>
+              <th class="py-3.5 px-4 font-semibold">Status</th>
+              <th class="py-3.5 px-4 font-semibold text-right">Ações</th>
+            </tr>
+          </thead>
+          <tbody id="quotes-table-body" class="divide-y divide-slate-100">
+            <!-- Linhas geradas via JavaScript -->
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Rodapé da Tabela com Totalizador -->
+      <div id="table-footer" class="hidden px-4 py-3 bg-slate-50 border-t border-slate-200/80 flex items-center justify-between text-xs text-valoriza-slate">
+        <div>
+          Exibindo <strong id="visible-count" class="text-valoriza-dark font-semibold">0</strong> cotações
+        </div>
+        <div class="text-right">
+          Atualizado em tempo real via Supabase
+        </div>
+      </div>
+
+    </div>
+
+  </main>
+
+  <!-- ==========================================
+       MODAL DE DETALHES DA COTAÇÃO
+       ========================================== -->
+  <div id="details-modal" class="fixed inset-0 z-50 hidden flex items-center justify-center p-4" aria-hidden="true">
+    <div id="details-backdrop" class="fixed inset-0 bg-valoriza-dark/60 backdrop-blur-xs transition-opacity"></div>
+    <div class="relative bg-white rounded-3xl max-w-lg w-full shadow-float overflow-hidden z-10 max-h-[90vh] flex flex-col">
+      <div class="p-5 border-b border-slate-100 flex items-center justify-between bg-slate-50/70">
+        <div>
+          <span class="text-[10px] font-heading font-bold uppercase tracking-wider text-valoriza-blue block">Detalhes do Lead</span>
+          <h3 class="font-heading text-lg font-bold text-valoriza-dark" id="modal-client-name">Carregando...</h3>
+        </div>
+        <button type="button" id="close-details-btn" class="w-8 h-8 rounded-full bg-slate-100 text-valoriza-slate flex items-center justify-center hover:bg-slate-200">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+        </button>
+      </div>
+
+      <div class="p-5 overflow-y-auto space-y-4 custom-scrollbar text-xs sm:text-sm" id="modal-content-body">
+        <!-- Preenchido dinamicamente -->
+      </div>
+
+      <div class="p-4 bg-slate-50 border-t border-slate-200 flex items-center justify-between gap-2.5">
+        <button 
+          type="button" 
+          id="modal-copy-summary-btn"
+          class="py-2.5 px-3.5 rounded-xl border border-slate-200 bg-white hover:bg-slate-100 text-valoriza-dark font-semibold text-xs transition-colors flex items-center gap-1.5"
+        >
+          <svg class="w-3.5 h-3.5 text-valoriza-blue" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>
+          <span id="modal-copy-text">Copiar Resumo</span>
+        </button>
+
+        <a 
+          href="#" 
+          id="modal-whatsapp-link" 
+          target="_blank"
+          class="py-2.5 px-4 rounded-xl bg-valoriza-green hover:bg-[#1e8e48] text-white font-heading font-bold text-xs transition-all shadow-md flex items-center gap-1.5"
+        >
+          <svg class="w-4 h-4 fill-current" viewBox="0 0 24 24">
+            <path d="M12.031 6.172c-3.181 0-5.767 2.586-5.768 5.766-.001 1.298.38 2.27 1.019 3.287l-.582 2.128 2.182-.573c.978.58 1.911.928 3.145.929 3.178 0 5.767-2.587 5.768-5.766.001-3.187-2.575-5.77-5.764-5.771zm3.392 8.244c-.144.405-.837.774-1.17.824-.299.045-.677.063-1.092-.069-.252-.08-.575-.187-.988-.365-1.739-.751-2.874-2.502-2.961-2.617-.087-.116-.708-.94-.708-1.793s.448-1.273.607-1.446c.159-.173.346-.217.462-.217l.332.006c.106.005.249-.04.39.298.144.347.491 1.2.534 1.287.043.087.072.188.014.304-.058.116-.087.188-.173.289l-.26.304c-.087.086-.177.18-.076.354.101.174.449.741.964 1.201.662.591 1.221.774 1.394.86s.274.072.376-.043c.101-.116.433-.506.549-.68.116-.173.231-.145.39-.087s1.011.477 1.184.564.289.13.332.202c.045.072.045.419-.1.824zm-3.423-14.416c-6.627 0-12 5.373-12 12 0 2.625.846 5.059 2.284 7.033l-1.494 5.459 5.601-1.469c1.914 1.252 4.198 1.977 6.609 1.977 6.627 0 12-5.373 12-12s-5.373-12-12-12z"/>
+          </svg>
+          <span>Abrir no WhatsApp</span>
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==========================================
+       MODAL DE INSTRUÇÕES SQL DO SUPABASE
+       ========================================== -->
+  <div id="sql-modal" class="fixed inset-0 z-50 hidden flex items-center justify-center p-4" aria-hidden="true">
+    <div id="sql-backdrop" class="fixed inset-0 bg-valoriza-dark/60 backdrop-blur-xs transition-opacity"></div>
+    <div class="relative bg-white rounded-3xl max-w-2xl w-full shadow-float overflow-hidden z-10 max-h-[90vh] flex flex-col">
+      <div class="p-5 border-b border-slate-100 flex items-center justify-between bg-slate-50">
+        <div>
+          <span class="text-[10px] font-heading font-bold uppercase tracking-wider text-valoriza-blue block">Setup do Banco de Dados</span>
+          <h3 class="font-heading text-lg font-bold text-valoriza-dark">Criar Tabela no Supabase (1 Minuto)</h3>
+        </div>
+        <button type="button" id="close-sql-btn" class="w-8 h-8 rounded-full bg-slate-100 text-valoriza-slate flex items-center justify-center hover:bg-slate-200">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+        </button>
+      </div>
+
+      <div class="p-5 overflow-y-auto space-y-4 custom-scrollbar text-xs sm:text-sm">
+        <p class="text-valoriza-slate leading-relaxed">
+          Para que o sistema salve e sincronize todas as cotações automaticamente, execute este script SQL no seu Supabase:
+        </p>
+        <ol class="list-decimal pl-5 space-y-1.5 text-xs text-valoriza-charcoal font-medium">
+          <li>Acesse seu painel no Supabase: <a href="https://supabase.com/dashboard/project/vmcfimsfqtbfsovpzwml" target="_blank" class="text-valoriza-blue underline font-bold">vmcfimsfqtbfsovpzwml</a></li>
+          <li>No menu lateral esquerdo, clique no ícone <strong>SQL Editor</strong>.</li>
+          <li>Clique em <strong>+ New Query</strong>, cole o código abaixo e clique no botão verde <strong>Run</strong>.</li>
+        </ol>
+
+        <div class="relative">
+          <pre class="bg-slate-900 text-slate-100 p-4 rounded-xl text-xs font-mono overflow-x-auto max-h-60 custom-scrollbar" id="sql-code-snippet"></pre>
+          <button 
+            type="button" 
+            id="copy-sql-snippet-btn"
+            class="absolute top-2.5 right-2.5 px-3 py-1.5 rounded-lg bg-valoriza-blue hover:bg-valoriza-blueDark text-white text-[11px] font-heading font-semibold shadow-xs transition-colors flex items-center gap-1"
+          >
+            <span id="copy-sql-text">Copiar Código SQL</span>
+          </button>
+        </div>
+      </div>
+
+      <div class="p-4 bg-slate-50 border-t border-slate-200 flex justify-end">
+        <button type="button" id="close-sql-modal-bottom-btn" class="py-2.5 px-5 rounded-xl bg-valoriza-dark text-white font-heading font-semibold text-xs">
+          Entendi, já executei
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Script da Aplicação -->
+  <script>
+    // Estado local da tela
+    let allQuotes = [];
+    let currentSelectedQuote = null;
+    let currentUser = null;
+
+    // Elementos do DOM
+    const userDisplayEmail = document.getElementById('user-display-email');
+    const logoutBtn = document.getElementById('logout-btn');
+    const refreshBtn = document.getElementById('refresh-btn');
+    const refreshIcon = document.getElementById('refresh-icon');
+    const exportCsvBtn = document.getElementById('export-csv-btn');
+    const searchInput = document.getElementById('search-input');
+    const statusFilter = document.getElementById('status-filter');
+    const fipeFilter = document.getElementById('fipe-filter');
+    const sortFilter = document.getElementById('sort-filter');
+
+    const loadingState = document.getElementById('loading-state');
+    const emptyState = document.getElementById('empty-state');
+    const emptyStateDesc = document.getElementById('empty-state-desc');
+    const tableContainer = document.getElementById('table-container');
+    const tableFooter = document.getElementById('table-footer');
+    const quotesTableBody = document.getElementById('quotes-table-body');
+    const visibleCountEl = document.getElementById('visible-count');
+
+    const kpiTotal = document.getElementById('kpi-total');
+    const kpiNew = document.getElementById('kpi-new');
+    const kpiToday = document.getElementById('kpi-today');
+    const kpiAvg = document.getElementById('kpi-avg');
+
+    const setupSqlBanner = document.getElementById('setup-sql-banner');
+    const openSqlModalBtn = document.getElementById('open-sql-modal-btn');
+    const sqlModal = document.getElementById('sql-modal');
+    const sqlBackdrop = document.getElementById('sql-backdrop');
+    const closeSqlBtn = document.getElementById('close-sql-btn');
+    const closeSqlModalBottomBtn = document.getElementById('close-sql-modal-bottom-btn');
+    const sqlCodeSnippet = document.getElementById('sql-code-snippet');
+    const copySqlSnippetBtn = document.getElementById('copy-sql-snippet-btn');
+    const copySqlText = document.getElementById('copy-sql-text');
+
+    const detailsModal = document.getElementById('details-modal');
+    const detailsBackdrop = document.getElementById('details-backdrop');
+    const closeDetailsBtn = document.getElementById('close-details-btn');
+    const modalClientName = document.getElementById('modal-client-name');
+    const modalContentBody = document.getElementById('modal-content-body');
+    const modalWhatsappLink = document.getElementById('modal-whatsapp-link');
+    const modalCopySummaryBtn = document.getElementById('modal-copy-summary-btn');
+    const modalCopyText = document.getElementById('modal-copy-text');
+
+    // Preenche o código SQL no modal
+    if (typeof SUPABASE_SETUP_SQL !== 'undefined') {
+      sqlCodeSnippet.textContent = SUPABASE_SETUP_SQL;
+    }
+
+    // Formatação de Moeda
+    function formatMoney(val) {
+      const num = parseFloat(val) || 0;
+      return num.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+    }
+
+    // Formatação de Data
+    function formatDate(isoStr) {
+      if (!isoStr) return '-';
+      const d = new Date(isoStr);
+      return d.toLocaleDateString('pt-BR', {
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric'
+      }) + ' ' + d.toLocaleTimeString('pt-BR', {
+        hour: '2-digit',
+        minute: '2-digit'
+      });
+    }
+
+    // Formatação visual do CPF (000.000.000-00)
+    function formatCPF(raw) {
+      if (!raw) return '-';
+      const digits = raw.replace(/\D/g, '');
+      if (digits.length === 11) {
+        return digits.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, '$1.$2.$3-$4');
+      }
+      return raw;
+    }
+
+    // Limpeza de número para link de WhatsApp
+    function cleanPhoneForWhatsApp(phone) {
+      let digits = (phone || '').replace(/\D/g, '');
+      if (digits.length === 10 || digits.length === 11) {
+        digits = '55' + digits;
+      }
+      return digits;
+    }
+
+    // Cores de Badge por Status
+    function getStatusBadgeClass(status) {
+      switch (status) {
+        case 'Novo':
+          return 'bg-blue-100 text-valoriza-blueDark border-blue-200';
+        case 'Em Contato':
+          return 'bg-amber-100 text-amber-800 border-amber-200';
+        case 'Fechado':
+          return 'bg-emerald-100 text-emerald-800 border-emerald-200';
+        case 'Cancelado':
+          return 'bg-slate-100 text-slate-700 border-slate-200';
+        default:
+          return 'bg-slate-100 text-slate-800 border-slate-200';
+      }
+    }
+
+    // 1. Verificação de Autenticação
+    async function checkAuth() {
+      if (!supabaseClient) {
+        alert('Erro ao inicializar conexão com o banco.');
+        window.location.href = 'login.html';
+        return;
+      }
+
+      const { data: { session } } = await supabaseClient.auth.getSession();
+      if (!session || !session.user) {
+        window.location.href = 'login.html';
+        return;
+      }
+
+      currentUser = session.user;
+      userDisplayEmail.textContent = currentUser.email || 'Consultor Valoriza';
+
+      // Carrega os dados da tabela
+      loadQuotes();
+
+      // Ativa Realtime do Supabase para atualizar automaticamente
+      subscribeToRealtime();
+    }
+
+    // Logout
+    logoutBtn.addEventListener('click', async () => {
+      if (confirm('Deseja realmente sair do painel?')) {
+        await supabaseClient.auth.signOut();
+        window.location.href = 'login.html';
+      }
+    });
+
+    // 2. Carregar Cotações do Banco
+    async function loadQuotes() {
+      loadingState.classList.remove('hidden');
+      emptyState.classList.add('hidden');
+      tableContainer.classList.add('hidden');
+      tableFooter.classList.add('hidden');
+
+      refreshIcon.classList.add('animate-spin');
+
+      try {
+        const { data, error } = await supabaseClient
+          .from('cotacoes')
+          .select('*')
+          .order('created_at', { ascending: false });
+
+        refreshIcon.classList.remove('animate-spin');
+
+        if (error) {
+          console.warn('Erro ao consultar cotações:', error);
+          if (error.code === 'PGRST205' || error.message.includes('not find') || error.message.includes('cotacoes')) {
+            setupSqlBanner.classList.remove('hidden');
+            emptyStateDesc.textContent = 'A tabela "cotacoes" ainda não existe no seu Supabase. Clique no banner acima para executar o script SQL.';
+          }
+          allQuotes = [];
+          renderQuotes();
+          return;
+        }
+
+        setupSqlBanner.classList.add('hidden');
+        allQuotes = data || [];
+        updateKPIs(allQuotes);
+        renderQuotes();
+      } catch (err) {
+        refreshIcon.classList.remove('animate-spin');
+        console.error('Falha ao carregar cotações:', err);
+        allQuotes = [];
+        renderQuotes();
+      } finally {
+        loadingState.classList.add('hidden');
+      }
+    }
+
+    // 3. Atualizar Métricas (KPIs)
+    function updateKPIs(data) {
+      kpiTotal.textContent = data.length;
+
+      const newLeads = data.filter(q => q.status === 'Novo' || !q.status).length;
+      kpiNew.textContent = newLeads;
+
+      const now = new Date();
+      const todayStr = now.toISOString().slice(0, 10);
+      const todayCount = data.filter(q => (q.created_at || '').slice(0, 10) === todayStr).length;
+      kpiToday.textContent = todayCount;
+
+      if (data.length > 0) {
+        const sum = data.reduce((acc, q) => acc + (parseFloat(q.valor_total) || 0), 0);
+        const avg = sum / data.length;
+        kpiAvg.textContent = formatMoney(avg);
+      } else {
+        kpiAvg.textContent = 'R$ 0,00';
+      }
+    }
+
+    // 4. Filtrar e Renderizar Tabela
+    function renderQuotes() {
+      const searchTerm = searchInput.value.toLowerCase().trim();
+      const selectedStatus = statusFilter.value;
+      const selectedFipe = fipeFilter.value;
+      const sortBy = sortFilter.value;
+
+      // Filtragem
+      let filtered = allQuotes.filter(item => {
+        const matchesSearch = 
+          (item.nome || '').toLowerCase().includes(searchTerm) ||
+          (item.cpf || '').replace(/\D/g, '').includes(searchTerm.replace(/\D/g, '')) ||
+          (item.whatsapp || '').replace(/\D/g, '').includes(searchTerm.replace(/\D/g, ''));
+
+        const matchesStatus = (selectedStatus === 'ALL') || (item.status === selectedStatus);
+        const matchesFipe = (selectedFipe === 'ALL') || (item.fipe_faixa || '').includes(selectedFipe);
+
+        return matchesSearch && matchesStatus && matchesFipe;
+      });
+
+      // Ordenação
+      filtered.sort((a, b) => {
+        if (sortBy === 'recent') {
+          return new Date(b.created_at || 0) - new Date(a.created_at || 0);
+        } else if (sortBy === 'oldest') {
+          return new Date(a.created_at || 0) - new Date(b.created_at || 0);
+        } else if (sortBy === 'highest') {
+          return (parseFloat(b.valor_total) || 0) - (parseFloat(a.valor_total) || 0);
+        } else if (sortBy === 'lowest') {
+          return (parseFloat(a.valor_total) || 0) - (parseFloat(b.valor_total) || 0);
+        }
+        return 0;
+      });
+
+      // Renderização
+      if (filtered.length === 0) {
+        emptyState.classList.remove('hidden');
+        tableContainer.classList.add('hidden');
+        tableFooter.classList.add('hidden');
+        visibleCountEl.textContent = '0';
+        return;
+      }
+
+      emptyState.classList.add('hidden');
+      tableContainer.classList.remove('hidden');
+      tableFooter.classList.remove('hidden');
+      visibleCountEl.textContent = filtered.length;
+
+      quotesTableBody.innerHTML = filtered.map(quote => {
+        const dateFormatted = formatDate(quote.created_at);
+        const cleanPhone = cleanPhoneForWhatsApp(quote.whatsapp);
+        const phoneFormatted = quote.whatsapp || '-';
+        const cpfFormatted = formatCPF(quote.cpf);
+        const statusClass = getStatusBadgeClass(quote.status || 'Novo');
+        const opcionaisArray = Array.isArray(quote.opcionais) ? quote.opcionais : [];
+        const extrasCount = opcionaisArray.length;
+
+        // Mensagem pré-formatada para o consultor responder no WhatsApp
+        const greetingMsg = encodeURIComponent(
+          `Olá ${quote.nome}! Sou da equipe da *Valoriza Car*. Vi que você montou sua proteção veicular no site no valor de ${formatMoney(quote.valor_total)}/mês. Gostaria de tirar alguma dúvida ou deseja que eu finalize a emissão da sua proposta?`
+        );
+        const waLink = `https://wa.me/${cleanPhone}?text=${greetingMsg}`;
+
+        return `
+          <tr class="hover:bg-slate-50/80 transition-colors group">
+            <!-- Data -->
+            <td class="py-3 px-4 text-xs text-valoriza-slate whitespace-nowrap">
+              ${dateFormatted}
+            </td>
+
+            <!-- Nome & CPF -->
+            <td class="py-3 px-4">
+              <span class="font-heading font-bold text-valoriza-dark block text-xs sm:text-sm">${quote.nome || 'Cliente sem nome'}</span>
+              <span class="font-mono text-[11px] text-valoriza-muted flex items-center gap-1 mt-0.5">
+                CPF: ${cpfFormatted}
+              </span>
+            </td>
+
+            <!-- WhatsApp -->
+            <td class="py-3 px-4 whitespace-nowrap">
+              <span class="text-xs font-medium text-valoriza-dark block">${phoneFormatted}</span>
+              <a 
+                href="${waLink}" 
+                target="_blank" 
+                class="inline-flex items-center gap-1 text-[11px] font-semibold text-valoriza-green hover:underline mt-0.5"
+              >
+                <svg class="w-3 h-3 fill-current" viewBox="0 0 24 24"><path d="M12.031 6.172c-3.181 0-5.767 2.586-5.768 5.766-.001 1.298.38 2.27 1.019 3.287l-.582 2.128 2.182-.573c.978.58 1.911.928 3.145.929 3.178 0 5.767-2.587 5.768-5.766.001-3.187-2.575-5.77-5.764-5.771zm3.392 8.244c-.144.405-.837.774-1.17.824-.299.045-.677.063-1.092-.069-.252-.08-.575-.187-.988-.365-1.739-.751-2.874-2.502-2.961-2.617-.087-.116-.708-.94-.708-1.793s.448-1.273.607-1.446c.159-.173.346-.217.462-.217l.332.006c.106.005.249-.04.39.298.144.347.491 1.2.534 1.287.043.087.072.188.014.304-.058.116-.087.188-.173.289l-.26.304c-.087.086-.177.18-.076.354.101.174.449.741.964 1.201.662.591 1.221.774 1.394.86s.274.072.376-.043c.101-.116.433-.506.549-.68.116-.173.231-.145.39-.087s1.011.477 1.184.564.289.13.332.202c.045.072.045.419-.1.824zm-3.423-14.416c-6.627 0-12 5.373-12 12 0 2.625.846 5.059 2.284 7.033l-1.494 5.459 5.601-1.469c1.914 1.252 4.198 1.977 6.609 1.977 6.627 0 12-5.373 12-12s-5.373-12-12-12z"/></svg>
+                <span>Chamar no WhatsApp</span>
+              </a>
+            </td>
+
+            <!-- Veículo & Reboque -->
+            <td class="py-3 px-4">
+              <span class="text-xs font-semibold text-valoriza-dark block">${quote.fipe_faixa || 'Até R$ 50 mil'}</span>
+              <span class="text-[11px] text-valoriza-muted block mt-0.5">${quote.reboque || 'Reboque 100 km'}</span>
+            </td>
+
+            <!-- Opcionais -->
+            <td class="py-3 px-4 whitespace-nowrap">
+              ${extrasCount > 0 
+                ? `<span class="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-semibold bg-valoriza-blueLight text-valoriza-blueDark border border-valoriza-blue/20">
+                     +${extrasCount} opcional${extrasCount > 1 ? 'is' : ''}
+                   </span>`
+                : `<span class="text-xs text-slate-400">Apenas plano base</span>`
+              }
+            </td>
+
+            <!-- Valor Total -->
+            <td class="py-3 px-4 whitespace-nowrap">
+              <span class="font-heading font-extrabold text-sm sm:text-base text-valoriza-dark block">
+                ${formatMoney(quote.valor_total)}
+              </span>
+              <span class="text-[10px] text-valoriza-muted">/ mês</span>
+            </td>
+
+            <!-- Status (Dropdown interativo) -->
+            <td class="py-3 px-4 whitespace-nowrap">
+              <select 
+                onchange="updateQuoteStatus('${quote.id}', this.value)" 
+                class="text-xs font-bold py-1 px-2.5 rounded-lg border cursor-pointer focus:outline-none transition-colors ${statusClass}"
+              >
+                <option value="Novo" ${quote.status === 'Novo' ? 'selected' : ''}>Novo</option>
+                <option value="Em Contato" ${quote.status === 'Em Contato' ? 'selected' : ''}>Em Contato</option>
+                <option value="Fechado" ${quote.status === 'Fechado' ? 'selected' : ''}>Fechado</option>
+                <option value="Cancelado" ${quote.status === 'Cancelado' ? 'selected' : ''}>Cancelado</option>
+              </select>
+            </td>
+
+            <!-- Ações -->
+            <td class="py-3 px-4 text-right whitespace-nowrap">
+              <div class="inline-flex items-center gap-1.5">
+                <button 
+                  type="button" 
+                  onclick="openQuoteDetails('${quote.id}')"
+                  class="p-1.5 rounded-lg bg-slate-100 hover:bg-valoriza-blueLight text-valoriza-slate hover:text-valoriza-blue transition-colors"
+                  title="Ver detalhes completos"
+                >
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
+                </button>
+                <button 
+                  type="button" 
+                  onclick="deleteQuote('${quote.id}', '${(quote.nome || '').replace(/'/g, "\\'")}')"
+                  class="p-1.5 rounded-lg bg-slate-100 hover:bg-red-50 text-slate-400 hover:text-red-500 transition-colors"
+                  title="Excluir cotação"
+                >
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                </button>
+              </div>
+            </td>
+          </tr>
+        `;
+      }).join('');
+    }
+
+    // 5. Atualizar Status no Supabase
+    window.updateQuoteStatus = async function(id, newStatus) {
+      if (!supabaseClient) return;
+      try {
+        const { error } = await supabaseClient
+          .from('cotacoes')
+          .update({ status: newStatus })
+          .eq('id', id);
+
+        if (error) {
+          alert('Erro ao atualizar status: ' + error.message);
+          loadQuotes();
+        } else {
+          // Atualiza estado local sem recarregar tudo
+          const target = allQuotes.find(q => q.id === id);
+          if (target) target.status = newStatus;
+          updateKPIs(allQuotes);
+          renderQuotes();
+        }
+      } catch (err) {
+        alert('Erro ao atualizar status.');
+      }
+    };
+
+    // 6. Excluir Cotação
+    window.deleteQuote = async function(id, clientName) {
+      if (!confirm(`Deseja realmente excluir a cotação de ${clientName || 'este cliente'}?`)) {
+        return;
+      }
+      if (!supabaseClient) return;
+
+      try {
+        const { error } = await supabaseClient
+          .from('cotacoes')
+          .delete()
+          .eq('id', id);
+
+        if (error) {
+          alert('Erro ao excluir: ' + error.message);
+        } else {
+          allQuotes = allQuotes.filter(q => q.id !== id);
+          updateKPIs(allQuotes);
+          renderQuotes();
+        }
+      } catch (err) {
+        alert('Falha ao excluir registro.');
+      }
+    };
+
+    // 7. Modal de Detalhes da Cotação
+    window.openQuoteDetails = function(id) {
+      const quote = allQuotes.find(q => q.id === id);
+      if (!quote) return;
+      currentSelectedQuote = quote;
+
+      modalClientName.textContent = quote.nome || 'Cliente';
+
+      const cleanPhone = cleanPhoneForWhatsApp(quote.whatsapp);
+      const greetingMsg = encodeURIComponent(
+        `Olá ${quote.nome}! Sou da Valoriza Car. Recebi sua simulação no valor de ${formatMoney(quote.valor_total)}/mês. Gostaria de confirmar alguns dados para ativarmos sua proteção veicular!`
+      );
+      modalWhatsappLink.href = `https://wa.me/${cleanPhone}?text=${greetingMsg}`;
+
+      const opcionaisList = Array.isArray(quote.opcionais) ? quote.opcionais : [];
+
+      modalContentBody.innerHTML = `
+        <!-- Informações do Cliente -->
+        <div class="bg-slate-50 p-3.5 rounded-2xl border border-slate-100 space-y-1.5">
+          <div class="flex justify-between">
+            <span class="text-valoriza-muted">Nome:</span>
+            <span class="font-bold text-valoriza-dark">${quote.nome || '-'}</span>
+          </div>
+          <div class="flex justify-between">
+            <span class="text-valoriza-muted">CPF:</span>
+            <span class="font-mono font-medium text-valoriza-dark">${formatCPF(quote.cpf)}</span>
+          </div>
+          <div class="flex justify-between">
+            <span class="text-valoriza-muted">WhatsApp:</span>
+            <span class="font-medium text-valoriza-dark">${quote.whatsapp || '-'}</span>
+          </div>
+          <div class="flex justify-between">
+            <span class="text-valoriza-muted">Data/Hora:</span>
+            <span class="text-valoriza-dark">${formatDate(quote.created_at)}</span>
+          </div>
+        </div>
+
+        <!-- Coberturas Escolhidas -->
+        <div class="space-y-2">
+          <h4 class="font-heading font-bold text-xs uppercase tracking-wider text-valoriza-slate">Composição do Plano:</h4>
+          
+          <div class="p-2.5 rounded-xl bg-slate-50 border border-slate-200/80 flex justify-between items-center">
+            <div>
+              <span class="font-semibold text-valoriza-dark block">Plano Essencial Base</span>
+              <span class="text-[11px] text-valoriza-muted">Roubo, Furto, Colisão, Danos da Natureza</span>
+            </div>
+            <span class="font-bold text-valoriza-dark">R$ 119,90</span>
+          </div>
+
+          <div class="p-2.5 rounded-xl bg-slate-50 border border-slate-200/80 flex justify-between items-center">
+            <div>
+              <span class="font-semibold text-valoriza-dark block">Faixa FIPE: ${quote.fipe_faixa || 'Até R$ 50 mil'}</span>
+            </div>
+            <span class="font-bold text-valoriza-blue">+${formatMoney(quote.fipe_adicional || 0)}</span>
+          </div>
+
+          <div class="p-2.5 rounded-xl bg-slate-50 border border-slate-200/80 flex justify-between items-center">
+            <div>
+              <span class="font-semibold text-valoriza-dark block">${quote.reboque || 'Reboque 100 km'}</span>
+            </div>
+            <span class="font-bold text-valoriza-blue">${(quote.reboque_valor > 0) ? '+' + formatMoney(quote.reboque_valor) : 'Incluso'}</span>
+          </div>
+
+          ${opcionaisList.length > 0 ? `
+            <div class="pt-2">
+              <span class="text-xs font-semibold text-valoriza-slate block mb-1.5">Opcionais Selecionados:</span>
+              <div class="space-y-1.5">
+                ${opcionaisList.map(op => `
+                  <div class="p-2 rounded-lg bg-valoriza-blueLight/50 border border-valoriza-blue/20 flex justify-between items-center text-xs">
+                    <span class="font-medium text-valoriza-dark">${op.title}</span>
+                    <span class="font-bold text-valoriza-blue">+${formatMoney(op.price)}</span>
+                  </div>
+                `).join('')}
+              </div>
+            </div>
+          ` : '<p class="text-xs text-valoriza-muted italic">Nenhum opcional extra foi selecionado.</p>'}
+        </div>
+
+        <!-- Total -->
+        <div class="p-3.5 rounded-2xl bg-valoriza-dark text-white flex justify-between items-center">
+          <span class="font-heading font-semibold text-xs uppercase tracking-wider text-valoriza-yellow">Total Mensal Estimado:</span>
+          <span class="font-heading text-xl font-extrabold text-white">${formatMoney(quote.valor_total)}/mês</span>
+        </div>
+      `;
+
+      detailsModal.classList.remove('hidden');
+    };
+
+    function closeDetailsModal() {
+      detailsModal.classList.add('hidden');
+      modalCopyText.textContent = 'Copiar Resumo';
+    }
+    closeDetailsBtn.addEventListener('click', closeDetailsModal);
+    detailsBackdrop.addEventListener('click', closeDetailsModal);
+
+    // Copiar Resumo da Cotação
+    modalCopySummaryBtn.addEventListener('click', () => {
+      if (!currentSelectedQuote) return;
+      const q = currentSelectedQuote;
+      const opcionaisList = Array.isArray(q.opcionais) ? q.opcionais : [];
+      
+      const text = [
+        `*COTAÇÃO VALORIZA CAR*`,
+        `👤 Cliente: ${q.nome}`,
+        `📄 CPF: ${formatCPF(q.cpf)}`,
+        `📱 WhatsApp: ${q.whatsapp}`,
+        `🚗 Faixa FIPE: ${q.fipe_faixa || 'Até R$ 50 mil'}`,
+        `🚛 Reboque: ${q.reboque || '100 km'}`,
+        `✨ Opcionais: ${opcionaisList.map(o => o.title).join(', ') || 'Nenhum'}`,
+        `💰 Total: ${formatMoney(q.valor_total)}/mês`,
+        `📅 Data: ${formatDate(q.created_at)}`
+      ].join('\n');
+
+      navigator.clipboard.writeText(text).then(() => {
+        modalCopyText.textContent = '✓ Copiado!';
+        setTimeout(() => { modalCopyText.textContent = 'Copiar Resumo'; }, 2000);
+      });
+    });
+
+    // 8. Exportar para CSV
+    exportCsvBtn.addEventListener('click', () => {
+      if (allQuotes.length === 0) {
+        alert('Não há dados para exportar.');
+        return;
+      }
+
+      const headers = ['ID', 'Data', 'Nome', 'WhatsApp', 'CPF', 'Faixa FIPE', 'Reboque', 'Opcionais', 'Valor Total', 'Status'];
+      const rows = allQuotes.map(q => {
+        const opcionaisTitles = Array.isArray(q.opcionais) 
+          ? q.opcionais.map(o => o.title).join('; ') 
+          : '';
+
+        return [
+          q.id,
+          `"${formatDate(q.created_at)}"`,
+          `"${(q.nome || '').replace(/"/g, '""')}"`,
+          `"${(q.whatsapp || '').replace(/"/g, '""')}"`,
+          `"${formatCPF(q.cpf)}"`,
+          `"${(q.fipe_faixa || '').replace(/"/g, '""')}"`,
+          `"${(q.reboque || '').replace(/"/g, '""')}"`,
+          `"${opcionaisTitles.replace(/"/g, '""')}"`,
+          `"${(q.valor_total || 0)}"`,
+          `"${q.status || 'Novo'}"`
+        ];
+      });
+
+      const csvContent = '\uFEFF' + [headers.join(','), ...rows.map(r => r.join(','))].join('\n');
+      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `cotacoes_valorizacar_${new Date().toISOString().slice(0, 10)}.csv`;
+      a.click();
+      URL.revokeObjectURL(url);
+    });
+
+    // 9. Modal de Setup SQL do Supabase
+    function openSqlModal() {
+      sqlModal.classList.remove('hidden');
+    }
+    function closeSqlModal() {
+      sqlModal.classList.add('hidden');
+      copySqlText.textContent = 'Copiar Código SQL';
+    }
+    openSqlModalBtn.addEventListener('click', openSqlModal);
+    closeSqlBtn.addEventListener('click', closeSqlModal);
+    sqlBackdrop.addEventListener('click', closeSqlModal);
+    closeSqlModalBottomBtn.addEventListener('click', () => {
+      closeSqlModal();
+      loadQuotes();
+    });
+
+    copySqlSnippetBtn.addEventListener('click', () => {
+      const code = sqlCodeSnippet.textContent;
+      navigator.clipboard.writeText(code).then(() => {
+        copySqlText.textContent = '✓ Código Copiado!';
+        setTimeout(() => { copySqlText.textContent = 'Copiar Código SQL'; }, 2500);
+      });
+    });
+
+    // 10. Atualização em Tempo Real (Supabase Realtime)
+    function subscribeToRealtime() {
+      if (!supabaseClient) return;
+
+      try {
+        supabaseClient
+          .channel('cotacoes_admin_realtime')
+          .on(
+            'postgres_changes',
+            { event: '*', schema: 'public', table: 'cotacoes' },
+            (payload) => {
+              console.log('Realtime update recebido:', payload);
+              loadQuotes();
+            }
+          )
+          .subscribe();
+      } catch (err) {
+        console.warn('Realtime subscription aviso:', err);
+      }
+    }
+
+    // Eventos de Busca e Filtros
+    searchInput.addEventListener('input', renderQuotes);
+    statusFilter.addEventListener('change', renderQuotes);
+    fipeFilter.addEventListener('change', renderQuotes);
+    sortFilter.addEventListener('change', renderQuotes);
+    refreshBtn.addEventListener('click', loadQuotes);
+
+    // Inicialização
+    checkAuth();
+  </script>
+</body>
+</html>
