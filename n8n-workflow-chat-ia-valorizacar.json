@@ -54,6 +54,7 @@
     },
     {
       "parameters": {
+        "sessionIdType": "customKey",
         "sessionKey": "={{ $json.body.sessionId || $json.sessionId || \"session_chat_valorizacar\" }}"
       },
       "id": "c1a2b3d4-0004-4000-8000-000000000004",
