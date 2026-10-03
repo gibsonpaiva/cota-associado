@@ -1739,17 +1739,31 @@
         return null;
       }
       try {
+        // Sanitiza para garantir que apenas colunas existentes na tabela sejam enviadas
+        const sanitized = {
+          nome: payload.nome || 'Cliente',
+          whatsapp: payload.whatsapp || '',
+          cpf: payload.cpf || null,
+          fipe_faixa: payload.fipe_faixa || null,
+          fipe_adicional: Number(payload.fipe_adicional) || 0,
+          reboque: payload.reboque || null,
+          reboque_valor: Number(payload.reboque_valor) || 0,
+          opcionais: Array.isArray(payload.opcionais) ? payload.opcionais : [],
+          valor_total: Number(payload.valor_total) || 0,
+          status: payload.status || 'Novo'
+        };
+
         const { data, error } = await supabaseClient
           .from('cotacoes')
-          .insert([payload])
-          .select();
+          .insert([sanitized]);
 
         if (error) {
           console.warn('Aviso Supabase (se a tabela cotacoes ainda não existir, crie-a pelo SQL):', error.message);
+          return null;
         } else {
-          console.log('✓ Cotação registrada no Supabase com sucesso!', data);
+          console.log('✓ Cotação registrada no Supabase com sucesso!');
+          return true;
         }
-        return data;
       } catch (err) {
         console.warn('Erro na comunicação com Supabase:', err);
         return null;
@@ -1773,24 +1787,22 @@
         const enrichedPayload = {
           ...payload,
           whatsapp_link: `https://wa.me/${intlPhone}`,
-          valor_total_formatado: `R$ ${formatCurrencyNumber(payload.valor_total)}/mês`,
+          valor_total_formatado: `R$ ${formatCurrencyNumber(Number(payload.valor_total) || 0)}/mês`,
           data_hora: new Date().toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo' }),
           opcionais_texto: Array.isArray(payload.opcionais) && payload.opcionais.length > 0
-            ? payload.opcionais.map(o => `• ${o.title} (+R$ ${formatCurrencyNumber(o.price)}/mês)`).join('\n')
+            ? payload.opcionais.map(o => `• ${o.title || o.id} (+R$ ${formatCurrencyNumber(Number(o.price) || 0)}/mês)`).join('\n')
             : 'Nenhum opcional selecionado'
         };
 
         console.log('🚀 Enviando cotação para o Webhook N8N...');
-        fetch(webhookUrl, {
+        await fetch(webhookUrl, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(enrichedPayload),
-          mode: 'no-cors'
-        }).then(() => {
-          console.log('✓ Disparado com sucesso para o N8N!');
-        }).catch(err => {
-          console.warn('Aviso no disparo para o N8N:', err);
+          mode: 'no-cors',
+          keepalive: true
         });
+        console.log('✓ Disparado com sucesso para o N8N!');
       } catch (err) {
         console.warn('Erro ao preparar payload do N8N:', err);
       }
@@ -1954,6 +1966,21 @@
       return safe;
     }
 
+    function formatChatPhoneInput(el) {
+      if (!el) return;
+      let val = el.value.replace(/\D/g, '');
+      if (val.length > 11) val = val.substring(0, 11);
+      if (val.length > 10) {
+        el.value = `(${val.substring(0, 2)}) ${val.substring(2, 7)}-${val.substring(7)}`;
+      } else if (val.length > 6) {
+        el.value = `(${val.substring(0, 2)}) ${val.substring(2, 6)}-${val.substring(6)}`;
+      } else if (val.length > 2) {
+        el.value = `(${val.substring(0, 2)}) ${val.substring(2)}`;
+      } else if (val.length > 0) {
+        el.value = `(${val}`;
+      }
+    }
+
     function scrollChatToBottom() {
       if (chatMessagesContainer) {
         setTimeout(() => {
@@ -2115,7 +2142,7 @@ Para começarmos, **qual é o seu nome e qual o modelo/ano do seu carro?** (Ou e
       }
 
       return `
-        <div class="bg-white rounded-2xl border-2 border-valoriza-blue/80 shadow-md p-4 sm:p-5 space-y-3.5">
+        <div class="chat-plan-card bg-white rounded-2xl border-2 border-valoriza-blue/80 shadow-md p-4 sm:p-5 space-y-3.5">
           <div class="flex items-center justify-between gap-2 border-b border-slate-100 pb-3">
             <div class="flex items-center gap-2">
               <span class="p-1 rounded-lg bg-valoriza-blueLight text-valoriza-blue">
@@ -2165,29 +2192,38 @@ Para começarmos, **qual é o seu nome e qual o modelo/ano do seu carro?** (Ou e
           <!-- Dados de Contato e Botões de Ação -->
           <div class="pt-3 border-t border-slate-100 space-y-2.5">
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
-              <input 
-                type="text" 
-                id="chat-card-name" 
-                placeholder="Seu Nome Completo" 
-                value="${escapeHtml(currentName)}"
-                oninput="document.getElementById('user-name').value = this.value"
-                class="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 bg-slate-50 focus:bg-white text-valoriza-dark focus:outline-none focus:ring-1 focus:ring-valoriza-blue"
-              />
-              <input 
-                type="tel" 
-                id="chat-card-phone" 
-                placeholder="Seu WhatsApp (DDD + Número)" 
-                value="${escapeHtml(currentPhone)}"
-                oninput="document.getElementById('user-phone').value = this.value; maskPhoneInput(this);"
-                class="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 bg-slate-50 focus:bg-white text-valoriza-dark focus:outline-none focus:ring-1 focus:ring-valoriza-blue"
-              />
+              <div>
+                <label class="block text-[11px] font-semibold text-slate-600 mb-1">Seu Nome Completo:</label>
+                <input 
+                  type="text" 
+                  class="chat-card-name w-full px-3 py-2 text-xs rounded-xl border border-slate-200 bg-slate-50 focus:bg-white text-valoriza-dark focus:outline-none focus:ring-1 focus:ring-valoriza-blue transition-all" 
+                  placeholder="Nome e Sobrenome" 
+                  value="${escapeHtml(currentName)}"
+                  oninput="if(document.getElementById('user-name')) document.getElementById('user-name').value = this.value"
+                />
+              </div>
+              <div>
+                <label class="block text-[11px] font-semibold text-slate-600 mb-1">Seu WhatsApp com DDD:</label>
+                <input 
+                  type="tel" 
+                  class="chat-card-phone w-full px-3 py-2 text-xs rounded-xl border border-slate-200 bg-slate-50 focus:bg-white text-valoriza-dark focus:outline-none focus:ring-1 focus:ring-valoriza-blue transition-all" 
+                  placeholder="(DDD) 99999-9999" 
+                  value="${escapeHtml(currentPhone)}"
+                  oninput="if(document.getElementById('user-phone')) document.getElementById('user-phone').value = this.value; formatChatPhoneInput(this);"
+                />
+              </div>
             </div>
 
-            <div class="flex flex-col sm:flex-row gap-2">
+            <div class="chat-card-error hidden text-xs text-rose-700 bg-rose-50 border border-rose-200 rounded-xl p-2.5 font-medium flex items-center gap-2">
+              <svg class="w-4 h-4 text-rose-500 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+              <span class="chat-card-error-text"></span>
+            </div>
+
+            <div class="flex flex-col sm:flex-row gap-2 pt-1">
               <button 
                 type="button" 
-                onclick="contractFromChatCard('${encodedPlan}')"
-                class="flex-1 py-3 px-4 rounded-xl bg-valoriza-green hover:bg-[#1e8e48] text-white font-heading font-bold text-xs shadow-md flex items-center justify-center gap-2 transition-all cursor-pointer"
+                onclick="contractFromChatCard(this, '${encodedPlan}')"
+                class="chat-btn-contract flex-1 py-3 px-4 rounded-xl bg-valoriza-green hover:bg-[#1e8e48] text-white font-heading font-bold text-xs shadow-md flex items-center justify-center gap-2 transition-all cursor-pointer"
               >
                 <svg class="w-4 h-4 fill-current shrink-0" viewBox="0 0 24 24"><path d="M12.031 6.172c-3.181 0-5.767 2.586-5.768 5.766-.001 1.298.38 2.27 1.019 3.287l-.582 2.128 2.182-.573c.978.58 1.911.928 3.145.929 3.178 0 5.767-2.587 5.768-5.766.001-3.187-2.575-5.77-5.764-5.771zm3.392 8.244c-.144.405-.837.774-1.17.824-.299.045-.677.063-1.092-.069-.252-.08-.575-.187-.988-.365-1.739-.751-2.874-2.502-2.961-2.617-.087-.116-.708-.94-.708-1.793s.448-1.273.607-1.446c.159-.173.346-.217.462-.217l.332.006c.106.005.249-.04.39.298.144.347.491 1.2.534 1.287.043.087.072.188.014.304-.058.116-.087.188-.173.289l-.26.304c-.087.086-.177.18-.076.354.101.174.449.741.964 1.201.662.591 1.221.774 1.394.86s.274.072.376-.043c.101-.116.433-.506.549-.68.116-.173.231-.145.39-.087s1.011.477 1.184.564.289.13.332.202c.045.072.045.419-.1.824zm-3.423-14.416c-6.627 0-12 5.373-12 12 0 2.625.846 5.059 2.284 7.033l-1.494 5.459 5.601-1.469c1.914 1.252 4.198 1.977 6.609 1.977 6.627 0 12-5.373 12-12s-5.373-12-12-12z"/></svg>
                 <span>Garantir Este Plano no WhatsApp</span>
@@ -2209,7 +2245,16 @@ Para começarmos, **qual é o seu nome e qual o modelo/ano do seu carro?** (Ou e
     }
 
     // Ação: Fechar contratação pelo Chat (WhatsApp + Supabase + N8N)
-    window.contractFromChatCard = function(encodedPlan) {
+    window.contractFromChatCard = async function(btnElOrPlan, maybePlan) {
+      let btnEl = null;
+      let encodedPlan = '';
+      if (typeof btnElOrPlan === 'string') {
+        encodedPlan = btnElOrPlan;
+      } else {
+        btnEl = btnElOrPlan;
+        encodedPlan = maybePlan;
+      }
+
       let plan;
       try {
         plan = JSON.parse(decodeURIComponent(encodedPlan));
@@ -2218,46 +2263,97 @@ Para começarmos, **qual é o seu nome e qual o modelo/ano do seu carro?** (Ou e
         return;
       }
 
-      const cardNameInput = document.getElementById('chat-card-name');
-      const cardPhoneInput = document.getElementById('chat-card-phone');
+      const card = btnEl ? btnEl.closest('.chat-plan-card') : document.querySelector('.chat-plan-card');
+      const cardNameInput = card ? card.querySelector('.chat-card-name') : document.querySelector('.chat-card-name');
+      const cardPhoneInput = card ? card.querySelector('.chat-card-phone') : document.querySelector('.chat-card-phone');
+      const errorBox = card ? card.querySelector('.chat-card-error') : null;
+      const errorText = card ? card.querySelector('.chat-card-error-text') : null;
 
-      let nameVal = cardNameInput && cardNameInput.value.trim() ? cardNameInput.value.trim() : nameInput.value.trim();
-      let phoneVal = cardPhoneInput && cardPhoneInput.value.trim() ? cardPhoneInput.value.trim() : phoneInput.value.trim();
+      const showError = (msg) => {
+        if (errorBox && errorText) {
+          errorText.textContent = msg;
+          errorBox.classList.remove('hidden');
+        } else {
+          alert(msg);
+        }
+      };
+
+      const clearError = () => {
+        if (errorBox) errorBox.classList.add('hidden');
+        if (cardNameInput) cardNameInput.classList.remove('border-rose-400', 'bg-rose-50/50');
+        if (cardPhoneInput) cardPhoneInput.classList.remove('border-rose-400', 'bg-rose-50/50');
+      };
+
+      clearError();
+
+      let nameVal = cardNameInput && cardNameInput.value.trim() ? cardNameInput.value.trim() : (nameInput ? nameInput.value.trim() : '');
+      if (!nameVal && typeof userVehicleProfile !== 'undefined' && userVehicleProfile.name) {
+        nameVal = userVehicleProfile.name;
+      }
+      let phoneVal = cardPhoneInput && cardPhoneInput.value.trim() ? cardPhoneInput.value.trim() : (phoneInput ? phoneInput.value.trim() : '');
 
       if (!nameVal || nameVal.length < 3) {
-        alert('Por favor, informe seu nome completo no campo indicado no cartão.');
-        if (cardNameInput) cardNameInput.focus();
+        if (cardNameInput) {
+          cardNameInput.classList.add('border-rose-400', 'bg-rose-50/50');
+          cardNameInput.focus();
+        }
+        showError('Por favor, informe seu Nome Completo acima para registrarmos sua cotação.');
         return;
       }
+
       const phoneDigits = phoneVal.replace(/\D/g, '');
       if (phoneDigits.length < 10) {
-        alert('Por favor, informe seu WhatsApp com DDD para contato.');
-        if (cardPhoneInput) cardPhoneInput.focus();
+        if (cardPhoneInput) {
+          cardPhoneInput.classList.add('border-rose-400', 'bg-rose-50/50');
+          cardPhoneInput.focus();
+        }
+        showError('Por favor, informe seu WhatsApp com DDD acima.');
         return;
       }
 
-      nameInput.value = nameVal;
-      phoneInput.value = phoneVal;
+      if (nameInput) nameInput.value = nameVal;
+      if (phoneInput) phoneInput.value = phoneVal;
 
+      // Estado de carregamento no botão
+      const originalBtnContent = btnEl ? btnEl.innerHTML : '';
+      if (btnEl) {
+        btnEl.disabled = true;
+        btnEl.innerHTML = `
+          <svg class="animate-spin w-4 h-4 text-white shrink-0" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+          </svg>
+          <span>Registrando e abrindo WhatsApp...</span>
+        `;
+      }
+
+      // Preparar payload sanitizado para o Supabase (colunas existentes na tabela)
       const payload = {
         nome: nameVal,
         whatsapp: phoneVal,
-        cpf: cpfInput.value.trim() || 'Via Chat IA',
+        cpf: (cpfInput && cpfInput.value.trim()) ? cpfInput.value.trim() : null,
         fipe_faixa: plan.fipe_faixa || 'Até R$ 50 mil',
-        fipe_adicional: plan.fipe_adicional || 0,
+        fipe_adicional: Number(plan.fipe_adicional) || 0,
         reboque: plan.reboque || 'Reboque 100 km',
-        reboque_valor: plan.reboque_valor || 0,
-        opcionais: plan.opcionais || [],
-        valor_total: plan.valor_total || 119.90,
-        status: 'Novo',
-        origem: 'Chatbot IA (Valéria)'
+        reboque_valor: Number(plan.reboque_valor) || 0,
+        opcionais: Array.isArray(plan.opcionais) ? plan.opcionais : [],
+        valor_total: Number(plan.valor_total) || 119.90,
+        status: 'Novo'
       };
 
-      // 1. Salvar no Supabase
-      saveQuoteToSupabase(payload);
+      // 1. Salvar no Supabase (await para assegurar registro antes da navegação)
+      try {
+        await saveQuoteToSupabase(payload);
+      } catch (err) {
+        console.warn('Erro ao salvar no Supabase:', err);
+      }
 
-      // 2. Disparar Webhook N8N
-      sendToN8nWebhook(payload);
+      // 2. Disparar Webhook N8N (Telegram e Gmail)
+      try {
+        await sendToN8nWebhook(payload);
+      } catch (err) {
+        console.warn('Erro ao disparar Webhook N8N:', err);
+      }
 
       // 3. Montar mensagem de WhatsApp
       const lines = [
@@ -2278,7 +2374,7 @@ Para começarmos, **qual é o seu nome e qual o modelo/ano do seu carro?** (Ou e
       if (Array.isArray(payload.opcionais) && payload.opcionais.length > 0) {
         lines.push(``, `✨ *Coberturas Extras Selecionadas:*`);
         payload.opcionais.forEach(o => {
-          lines.push(`• ${o.title}: +R$ ${formatCurrencyNumber(o.price)}/mês`);
+          lines.push(`• ${o.title || o.id}: +R$ ${formatCurrencyNumber(Number(o.price) || 0)}/mês`);
         });
       }
 
@@ -2291,6 +2387,11 @@ Para começarmos, **qual é o seu nome e qual o modelo/ano do seu carro?** (Ou e
 
       const encodedMessage = encodeURIComponent(lines.join('\n'));
       window.open(`https://wa.me/${WHATSAPP_NUMBER}?text=${encodedMessage}`, '_blank', 'noopener,noreferrer');
+
+      if (btnEl) {
+        btnEl.disabled = false;
+        btnEl.innerHTML = originalBtnContent;
+      }
     };
 
     // Ação: Aplicar o plano recomendado aos controles do Simulador Manual

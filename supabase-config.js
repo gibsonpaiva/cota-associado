@@ -7,9 +7,9 @@ const SUPABASE_CONFIG = {
 // Configuração dos Webhooks N8N (Notificações e Chatbot IA)
 const N8N_CONFIG = {
   // Webhook de Notificações (Telegram & Gmail)
-  webhookUrl: localStorage.getItem('valoriza_n8n_webhook_url') || '',
+  webhookUrl: localStorage.getItem('valoriza_n8n_webhook_url') || 'https://uselevi.cuboapp.net/webhook/cota-valorizacar',
   // Webhook do Chatbot IA com Gemini
-  chatWebhookUrl: localStorage.getItem('valoriza_n8n_chat_webhook_url') || ''
+  chatWebhookUrl: localStorage.getItem('valoriza_n8n_chat_webhook_url') || 'https://uselevi.cuboapp.net/webhook/chat-ia-valorizacar'
 };
 
 // Inicializa a instância do Supabase caso a biblioteca JS esteja carregada
