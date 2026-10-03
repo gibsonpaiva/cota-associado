@@ -1917,6 +1917,7 @@
     const resetChatBtn = document.getElementById('reset-chat-btn');
 
     let chatHistory = [];
+    let chatSessionId = 'sess_' + Math.random().toString(36).substring(2, 9) + '_' + Date.now();
     let isWaitingForAi = false;
     let chatConversationTurn = 0;
     let userVehicleProfile = {
@@ -2001,6 +2002,7 @@
     function initChat() {
       chatMessagesContainer.innerHTML = '';
       chatHistory = [];
+      chatSessionId = 'sess_' + Math.random().toString(36).substring(2, 9) + '_' + Date.now();
       chatConversationTurn = 0;
       userVehicleProfile = {
         name: nameInput.value.trim(),
@@ -2441,6 +2443,7 @@ Para começarmos, **qual é o seu nome e qual o modelo/ano do seu carro?** (Ou e
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
               message: userText,
+              sessionId: chatSessionId,
               history: chatHistory,
               userName: nameInput.value.trim(),
               userPhone: phoneInput.value.trim()
