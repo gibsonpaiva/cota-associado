@@ -418,6 +418,77 @@
   </div>
 
   <!-- ==========================================
+       MODAL DE CONFIRMAÇÃO DE CANCELAMENTO (COM MOTIVO)
+       ========================================== -->
+  <div id="cancel-modal" class="fixed inset-0 z-50 hidden flex items-center justify-center p-4" aria-hidden="true">
+    <div id="cancel-backdrop" class="fixed inset-0 bg-valoriza-dark/60 backdrop-blur-xs transition-opacity"></div>
+    <div class="relative bg-white rounded-3xl max-w-md w-full shadow-float overflow-hidden z-10 flex flex-col">
+      <div class="p-5 border-b border-rose-100 flex items-center justify-between bg-rose-50/80">
+        <div class="flex items-center gap-2.5">
+          <div class="w-9 h-9 rounded-xl bg-rose-600 text-white flex items-center justify-center shrink-0 shadow-xs">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+          </div>
+          <div>
+            <span class="text-[10px] font-heading font-bold uppercase tracking-wider text-rose-700 block">Status: Cancelado</span>
+            <h3 class="font-heading text-base font-bold text-valoriza-dark">Motivo do Cancelamento</h3>
+          </div>
+        </div>
+        <button type="button" id="close-cancel-btn" class="w-8 h-8 rounded-full bg-white text-valoriza-slate flex items-center justify-center hover:bg-slate-200">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+        </button>
+      </div>
+
+      <div class="p-5 space-y-3.5 text-xs sm:text-sm">
+        <p class="text-valoriza-slate text-xs leading-relaxed">
+          Informe o motivo do cancelamento da cotação de <strong id="cancel-client-name" class="text-valoriza-dark">Cliente</strong>. Esse motivo será registrado no histórico e enviado nas consultas do Telegram:
+        </p>
+
+        <!-- Sugestões Rápidas (Chips) -->
+        <div class="space-y-1.5">
+          <span class="text-[11px] font-semibold text-valoriza-muted block">Sugestões rápidas (toque para preencher):</span>
+          <div class="flex flex-wrap gap-1.5">
+            <button type="button" onclick="setCancelReason('Achou o valor da mensalidade alto')" class="px-2.5 py-1 rounded-lg bg-slate-100 hover:bg-rose-100 text-slate-700 hover:text-rose-800 text-[11px] font-medium transition-colors">Achou caro</button>
+            <button type="button" onclick="setCancelReason('Fechou com outra associação/seguradora')" class="px-2.5 py-1 rounded-lg bg-slate-100 hover:bg-rose-100 text-slate-700 hover:text-rose-800 text-[11px] font-medium transition-colors">Fechou com concorrente</button>
+            <button type="button" onclick="setCancelReason('Não respondeu no WhatsApp após tentativas')" class="px-2.5 py-1 rounded-lg bg-slate-100 hover:bg-rose-100 text-slate-700 hover:text-rose-800 text-[11px] font-medium transition-colors">Sem resposta no WhatsApp</button>
+            <button type="button" onclick="setCancelReason('Vendeu o veículo / Não possui mais o carro')" class="px-2.5 py-1 rounded-lg bg-slate-100 hover:bg-rose-100 text-slate-700 hover:text-rose-800 text-[11px] font-medium transition-colors">Vendeu o carro</button>
+            <button type="button" onclick="setCancelReason('Desistiu por motivos pessoais')" class="px-2.5 py-1 rounded-lg bg-slate-100 hover:bg-rose-100 text-slate-700 hover:text-rose-800 text-[11px] font-medium transition-colors">Desistiu</button>
+          </div>
+        </div>
+
+        <div>
+          <label for="cancel-reason-input" class="block font-semibold text-valoriza-dark mb-1 text-xs">
+            Descreva o motivo da recusa / cancelamento (obrigatório):
+          </label>
+          <textarea 
+            id="cancel-reason-input" 
+            rows="3" 
+            placeholder="Ex: Cliente achou a mensalidade acima do orçamento ou fechou com seguradora tradicional..."
+            class="w-full p-3 rounded-xl border border-slate-200 bg-slate-50 focus:bg-white text-xs sm:text-sm text-valoriza-dark focus:outline-none focus:ring-2 focus:ring-rose-400 transition-all resize-none"
+          ></textarea>
+          <p id="cancel-reason-error" class="hidden text-red-600 text-[11px] font-semibold mt-1">Por favor, descreva ou selecione o motivo do cancelamento antes de confirmar.</p>
+        </div>
+      </div>
+
+      <div class="p-4 bg-slate-50 border-t border-slate-200 flex items-center justify-end gap-2.5">
+        <button 
+          type="button" 
+          id="abort-cancel-btn"
+          class="py-2.5 px-4 rounded-xl border border-slate-200 bg-white hover:bg-slate-100 text-valoriza-slate font-semibold text-xs transition-colors"
+        >
+          Voltar
+        </button>
+        <button 
+          type="button" 
+          id="confirm-cancel-btn"
+          class="py-2.5 px-5 rounded-xl bg-rose-600 hover:bg-rose-700 text-white font-heading font-semibold text-xs transition-all shadow-sm"
+        >
+          Salvar Cancelamento
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==========================================
        MODAL DE INSTRUÇÕES SQL DO SUPABASE
        ========================================== -->
   <div id="sql-modal" class="fixed inset-0 z-50 hidden flex items-center justify-center p-4" aria-hidden="true">
@@ -860,7 +931,7 @@
             <!-- Status (Dropdown interativo) -->
             <td class="py-3 px-4 whitespace-nowrap">
               <select 
-                onchange="updateQuoteStatus('${quote.id}', this.value)" 
+                onchange="handleStatusSelectChange('${quote.id}', this.value, this)" 
                 class="text-xs font-bold py-1 px-2.5 rounded-lg border cursor-pointer focus:outline-none transition-colors ${statusClass}"
               >
                 <option value="Novo" ${quote.status === 'Novo' ? 'selected' : ''}>Novo</option>
@@ -868,6 +939,15 @@
                 <option value="Fechado" ${quote.status === 'Fechado' ? 'selected' : ''}>Fechado</option>
                 <option value="Cancelado" ${quote.status === 'Cancelado' ? 'selected' : ''}>Cancelado</option>
               </select>
+              ${quote.status === 'Cancelado' ? `
+                <div 
+                  onclick="openCancelModalForEdit('${quote.id}')"
+                  class="mt-1 text-[10px] text-rose-700 bg-rose-50 hover:bg-rose-100 px-2 py-0.5 rounded border border-rose-200/80 max-w-[170px] truncate cursor-pointer transition-colors"
+                  title="Motivo: ${(quote.motivo_cancelamento || 'Clique para definir motivo').replace(/"/g, '&quot;')}"
+                >
+                  ⚠️ ${quote.motivo_cancelamento || 'Definir motivo...'}
+                </div>
+              ` : ''}
             </td>
 
             <!-- Ações -->
@@ -896,22 +976,117 @@
       }).join('');
     }
 
-    // 5. Atualizar Status no Supabase
-    window.updateQuoteStatus = async function(id, newStatus) {
+    // Variáveis e Lógica do Modal de Cancelamento com Motivo Obrigatório
+    let pendingCancelQuoteId = null;
+    let pendingCancelSelectEl = null;
+    let pendingCancelPrevStatus = 'Novo';
+
+    const cancelModal = document.getElementById('cancel-modal');
+    const cancelBackdrop = document.getElementById('cancel-backdrop');
+    const closeCancelBtn = document.getElementById('close-cancel-btn');
+    const abortCancelBtn = document.getElementById('abort-cancel-btn');
+    const confirmCancelBtn = document.getElementById('confirm-cancel-btn');
+    const cancelClientName = document.getElementById('cancel-client-name');
+    const cancelReasonInput = document.getElementById('cancel-reason-input');
+    const cancelReasonError = document.getElementById('cancel-reason-error');
+
+    window.setCancelReason = function(reason) {
+      cancelReasonInput.value = reason;
+      cancelReasonError.classList.add('hidden');
+      cancelReasonInput.focus();
+    };
+
+    window.handleStatusSelectChange = function(id, newStatus, selectEl) {
+      const quote = allQuotes.find(q => q.id === id);
+      const prev = quote ? (quote.status || 'Novo') : 'Novo';
+
+      if (newStatus === 'Cancelado') {
+        pendingCancelQuoteId = id;
+        pendingCancelSelectEl = selectEl;
+        pendingCancelPrevStatus = prev;
+
+        cancelClientName.textContent = quote ? quote.nome : 'Cliente';
+        cancelReasonInput.value = quote && quote.motivo_cancelamento ? quote.motivo_cancelamento : '';
+        cancelReasonError.classList.add('hidden');
+        cancelModal.classList.remove('hidden');
+      } else {
+        updateQuoteStatus(id, newStatus, null);
+      }
+    };
+
+    window.openCancelModalForEdit = function(id) {
+      const quote = allQuotes.find(q => q.id === id);
+      if (!quote) return;
+      pendingCancelQuoteId = id;
+      pendingCancelSelectEl = null;
+      pendingCancelPrevStatus = 'Cancelado';
+
+      cancelClientName.textContent = quote.nome;
+      cancelReasonInput.value = quote.motivo_cancelamento || '';
+      cancelReasonError.classList.add('hidden');
+      cancelModal.classList.remove('hidden');
+    };
+
+    function closeCancelModal(revert = true) {
+      cancelModal.classList.add('hidden');
+      if (revert && pendingCancelSelectEl && pendingCancelPrevStatus !== 'Cancelado') {
+        pendingCancelSelectEl.value = pendingCancelPrevStatus;
+      }
+      pendingCancelQuoteId = null;
+      pendingCancelSelectEl = null;
+    }
+
+    closeCancelBtn.addEventListener('click', () => closeCancelModal(true));
+    cancelBackdrop.addEventListener('click', () => closeCancelModal(true));
+    abortCancelBtn.addEventListener('click', () => closeCancelModal(true));
+
+    confirmCancelBtn.addEventListener('click', async () => {
+      const reason = cancelReasonInput.value.trim();
+      if (!reason || reason.length < 2) {
+        cancelReasonError.classList.remove('hidden');
+        cancelReasonInput.focus();
+        return;
+      }
+
+      if (pendingCancelQuoteId) {
+        const targetId = pendingCancelQuoteId;
+        closeCancelModal(false);
+        await updateQuoteStatus(targetId, 'Cancelado', reason);
+      }
+    });
+
+    // 5. Atualizar Status no Supabase (com motivo de cancelamento)
+    window.updateQuoteStatus = async function(id, newStatus, motivoCancelamento = null) {
       if (!supabaseClient) return;
       try {
+        const updatePayload = { status: newStatus };
+        if (newStatus === 'Cancelado') {
+          updatePayload.motivo_cancelamento = motivoCancelamento;
+        }
+
         const { error } = await supabaseClient
           .from('cotacoes')
-          .update({ status: newStatus })
+          .update(updatePayload)
           .eq('id', id);
 
         if (error) {
-          alert('Erro ao atualizar status: ' + error.message);
+          console.warn('Erro ao atualizar status:', error);
+          if (error.message && (error.message.includes('motivo_cancelamento') || error.code === '42703')) {
+            alert('Aviso: A coluna "motivo_cancelamento" ainda não foi criada no seu Supabase.\n\nExecute no SQL Editor do Supabase:\nALTER TABLE public.cotacoes ADD COLUMN IF NOT EXISTS motivo_cancelamento TEXT;\n\nO status foi alterado para Cancelado sem motivo por enquanto.');
+            await supabaseClient.from('cotacoes').update({ status: newStatus }).eq('id', id);
+          } else {
+            alert('Erro ao atualizar status: ' + error.message);
+          }
           loadQuotes();
         } else {
           // Atualiza estado local sem recarregar tudo
           const target = allQuotes.find(q => q.id === id);
-          if (target) target.status = newStatus;
+          if (target) {
+            target.status = newStatus;
+            if (newStatus === 'Cancelado') {
+              target.motivo_cancelamento = motivoCancelamento;
+            }
+          }
           updateKPIs(allQuotes);
           renderQuotes();
         }
@@ -962,6 +1137,18 @@
       const opcionaisList = Array.isArray(quote.opcionais) ? quote.opcionais : [];
 
       modalContentBody.innerHTML = `
+        ${quote.status === 'Cancelado' ? `
+          <div class="p-3.5 rounded-2xl bg-rose-50 border border-rose-200">
+            <div class="flex items-center gap-1.5 text-rose-700 font-bold text-xs uppercase tracking-wide">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+              <span>Cotação Cancelada</span>
+            </div>
+            <p class="text-xs text-rose-900 mt-1 font-medium leading-relaxed">
+              <strong>Motivo do cancelamento:</strong> ${quote.motivo_cancelamento || 'Motivo não especificado'}
+            </p>
+          </div>
+        ` : ''}
+
         <!-- Informações do Cliente -->
         <div class="bg-slate-50 p-3.5 rounded-2xl border border-slate-100 space-y-1.5">
           <div class="flex justify-between">
@@ -1046,7 +1233,7 @@
       const q = currentSelectedQuote;
       const opcionaisList = Array.isArray(q.opcionais) ? q.opcionais : [];
       
-      const text = [
+      const lines = [
         `*COTAÇÃO VALORIZA CAR*`,
         `👤 Cliente: ${q.nome}`,
         `📄 CPF: ${formatCPF(q.cpf)}`,
@@ -1055,10 +1242,15 @@
         `🚛 Reboque: ${q.reboque || '100 km'}`,
         `✨ Opcionais: ${opcionaisList.map(o => o.title).join(', ') || 'Nenhum'}`,
         `💰 Total: ${formatMoney(q.valor_total)}/mês`,
-        `📅 Data: ${formatDate(q.created_at)}`
-      ].join('\n');
+        `📅 Data: ${formatDate(q.created_at)}`,
+        `📌 Status: ${q.status || 'Novo'}`
+      ];
 
-      navigator.clipboard.writeText(text).then(() => {
+      if (q.status === 'Cancelado' && q.motivo_cancelamento) {
+        lines.push(`⚠️ Motivo Cancelamento: ${q.motivo_cancelamento}`);
+      }
+
+      navigator.clipboard.writeText(lines.join('\n')).then(() => {
         modalCopyText.textContent = '✓ Copiado!';
         setTimeout(() => { modalCopyText.textContent = 'Copiar Resumo'; }, 2000);
       });
@@ -1071,7 +1263,7 @@
         return;
       }
 
-      const headers = ['ID', 'Data', 'Nome', 'WhatsApp', 'CPF', 'Faixa FIPE', 'Reboque', 'Opcionais', 'Valor Total', 'Status'];
+      const headers = ['ID', 'Data', 'Nome', 'WhatsApp', 'CPF', 'Faixa FIPE', 'Reboque', 'Opcionais', 'Valor Total', 'Status', 'Motivo Cancelamento'];
       const rows = allQuotes.map(q => {
         const opcionaisTitles = Array.isArray(q.opcionais) 
           ? q.opcionais.map(o => o.title).join('; ') 
@@ -1087,7 +1279,8 @@
           `"${(q.reboque || '').replace(/"/g, '""')}"`,
           `"${opcionaisTitles.replace(/"/g, '""')}"`,
           `"${(q.valor_total || 0)}"`,
-          `"${q.status || 'Novo'}"`
+          `"${q.status || 'Novo'}"`,
+          `"${(q.motivo_cancelamento || '').replace(/"/g, '""')}"`
         ];
       });
 

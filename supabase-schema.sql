@@ -20,8 +20,12 @@ CREATE TABLE IF NOT EXISTS public.cotacoes (
   reboque_valor NUMERIC DEFAULT 0,
   opcionais JSONB DEFAULT '[]'::jsonb,
   valor_total NUMERIC NOT NULL,
-  status TEXT DEFAULT 'Novo'
+  status TEXT DEFAULT 'Novo',
+  motivo_cancelamento TEXT
 );
+
+-- Garantir adição da coluna caso a tabela já exista
+ALTER TABLE public.cotacoes ADD COLUMN IF NOT EXISTS motivo_cancelamento TEXT;
 
 -- 2. Habilitação de Segurança por Nível de Linha (RLS)
 ALTER TABLE public.cotacoes ENABLE ROW LEVEL SECURITY;
