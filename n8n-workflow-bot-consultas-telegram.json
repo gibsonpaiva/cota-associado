@@ -1,0 +1,179 @@
+{
+  "name": "Valoriza Car - Bot Consultas Telegram (Supabase)",
+  "nodes": [
+    {
+      "parameters": {
+        "updates": [
+          "message",
+          "callback_query"
+        ],
+        "additionalFields": {}
+      },
+      "id": "a1b2c3d4-0001-4000-8000-000000000001",
+      "name": "Telegram Trigger",
+      "type": "n8n-nodes-base.telegramTrigger",
+      "typeVersion": 1.1,
+      "position": [
+        220,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "https://vmcfimsfqtbfsovpzwml.supabase.co/rest/v1/cotacoes?select=*&order=created_at.desc",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "apikey",
+              "value": "COLE_AQUI_SUA_SERVICE_ROLE_KEY_SUPABASE"
+            },
+            {
+              "name": "Authorization",
+              "value": "Bearer COLE_AQUI_SUA_SERVICE_ROLE_KEY_SUPABASE"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "a1b2c3d4-0002-4000-8000-000000000002",
+      "name": "Consultar Supabase",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        460,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// 1. Identifica a origem do evento no Telegram (Mensagem de texto ou Clique de Botão)\nconst triggerData = $(\"Telegram Trigger\").first().json;\nconst isCallback = !!triggerData.callback_query;\n\nconst chatId = isCallback\n  ? triggerData.callback_query.message.chat.id\n  : triggerData.message?.chat?.id;\n\nconst rawText = isCallback\n  ? (triggerData.callback_query.data || '')\n  : (triggerData.message?.text || '');\n\nconst action = rawText.trim().toLowerCase();\n\n// 2. Extrai todas as cotações retornadas pelo Supabase\nlet quotes = [];\nconst supabaseItems = $input.all();\nif (supabaseItems && supabaseItems.length > 0) {\n  if (Array.isArray(supabaseItems[0].json)) {\n    quotes = supabaseItems[0].json;\n  } else if (supabaseItems[0].json && Array.isArray(supabaseItems[0].json.data)) {\n    quotes = supabaseItems[0].json.data;\n  } else {\n    quotes = supabaseItems.map(item => item.json);\n  }\n}\n\n// 3. Funções utilitárias de formatação\nconst formatMoney = (val) => {\n  const num = parseFloat(val) || 0;\n  return `R$ ${num.toFixed(2).replace('.', ',')}`;\n};\n\nconst getBRDate = (isoStr) => {\n  if (!isoStr) return '';\n  const d = new Date(isoStr);\n  return d.toLocaleDateString('pt-BR', { timeZone: 'America/Sao_Paulo' });\n};\n\nconst getBRDateTime = (isoStr) => {\n  if (!isoStr) return '';\n  const d = new Date(isoStr);\n  return d.toLocaleDateString('pt-BR', {\n    day: '2-digit',\n    month: '2-digit',\n    timeZone: 'America/Sao_Paulo'\n  }) + ' às ' + d.toLocaleTimeString('pt-BR', {\n    hour: '2-digit',\n    minute: '2-digit',\n    timeZone: 'America/Sao_Paulo'\n  });\n};\n\nconst cleanPhone = (phone) => {\n  const digits = (phone || '').replace(/\\D/g, '');\n  return digits.length === 10 || digits.length === 11 ? '55' + digits : digits;\n};\n\n// 4. Cálculos analíticos do painel\nconst hojeBR = new Date().toLocaleDateString('pt-BR', { timeZone: 'America/Sao_Paulo' });\nconst cotacoesHoje = quotes.filter(q => getBRDate(q.created_at) === hojeBR);\nconst cotacoesPendentes = quotes.filter(q => (q.status || 'Novo') === 'Novo');\nconst cotacoesEmContato = quotes.filter(q => q.status === 'Em Contato');\nconst cotacoesFechadas = quotes.filter(q => q.status === 'Fechado');\n\nconst totalGeral = quotes.length;\nconst valorTotalGeral = quotes.reduce((acc, q) => acc + (parseFloat(q.valor_total) || 0), 0);\nconst ticketMedioGeral = totalGeral > 0 ? (valorTotalGeral / totalGeral) : 0;\n\nconst valorTotalHoje = cotacoesHoje.reduce((acc, q) => acc + (parseFloat(q.valor_total) || 0), 0);\nconst ticketMedioHoje = cotacoesHoje.length > 0 ? (valorTotalHoje / cotacoesHoje.length) : 0;\n\n// 5. Montagem da resposta conforme a opção clicada ou digitada\nlet mensagem = '';\n\nif (action === 'hoje' || action.includes('hoje')) {\n  mensagem = `📅 <b>COTAÇÕES DE HOJE (${hojeBR})</b>\\n\\n` +\n    `• Total hoje: <b>${cotacoesHoje.length} cotações</b>\\n` +\n    `• Volume simulado: <b>${formatMoney(valorTotalHoje)}/mês</b>\\n` +\n    `• Ticket médio hoje: <b>${formatMoney(ticketMedioHoje)}/mês</b>\\n\\n`;\n\n  if (cotacoesHoje.length > 0) {\n    mensagem += `📋 <b>Leads de hoje:</b>\\n`;\n    cotacoesHoje.slice(0, 5).forEach((q, idx) => {\n      const waLink = `https://wa.me/${cleanPhone(q.whatsapp)}`;\n      mensagem += `${idx + 1}. <b>${q.nome || 'Cliente'}</b> - ${formatMoney(q.valor_total)}/mês (${q.status || 'Novo'})\\n` +\n        `   👉 <a href=\"${waLink}\">Chamar no WhatsApp</a>\\n`;\n    });\n    if (cotacoesHoje.length > 5) {\n      mensagem += `\\n<i>... e mais ${cotacoesHoje.length - 5} cotações hoje no painel web.</i>\\n`;\n    }\n  } else {\n    mensagem += `<i>Nenhuma cotação recebida hoje até o momento.</i>\\n`;\n  }\n} else if (action === 'pendentes' || action.includes('pendente')) {\n  mensagem = `⏳ <b>LEADS PENDENTES DE CONTATO</b>\\n\\n` +\n    `Você tem <b>${cotacoesPendentes.length} cotações</b> aguardando primeiro contato:\\n\\n`;\n\n  if (cotacoesPendentes.length > 0) {\n    cotacoesPendentes.slice(0, 5).forEach((q, idx) => {\n      const waLink = `https://wa.me/${cleanPhone(q.whatsapp)}`;\n      mensagem += `${idx + 1}. <b>${q.nome || 'Cliente'}</b> (${getBRDateTime(q.created_at)})\\n` +\n        `   💰 ${formatMoney(q.valor_total)}/mês | ${q.fipe_faixa || 'Veículo'}\\n` +\n        `   👉 <a href=\"${waLink}\">Chamar no WhatsApp</a>\\n\\n`;\n    });\n    if (cotacoesPendentes.length > 5) {\n      mensagem += `<i>... e mais ${cotacoesPendentes.length - 5} pendentes na fila.</i>\\n`;\n    }\n  } else {\n    mensagem += `🎉 <i>Sensacional! Todos os leads recebidos já foram contatados!</i>\\n`;\n  }\n} else if (action === 'ticket' || action.includes('ticket') || action.includes('medio')) {\n  const valores = quotes.map(q => parseFloat(q.valor_total) || 0);\n  const menor = valores.length > 0 ? Math.min(...valores) : 0;\n  const maior = valores.length > 0 ? Math.max(...valores) : 0;\n  const somaFechados = cotacoesFechadas.reduce((acc, q) => acc + (parseFloat(q.valor_total) || 0), 0);\n\n  mensagem = `💰 <b>MÉTRICAS FINANCEIRAS - VALORIZA CAR</b>\\n\\n` +\n    `• <b>Ticket Médio Geral:</b> <b>${formatMoney(ticketMedioGeral)}/mês</b>\\n` +\n    `• <b>Ticket Médio de Hoje:</b> ${formatMoney(ticketMedioHoje)}/mês\\n` +\n    `• <b>Menor Plano Cotado:</b> ${formatMoney(menor)}/mês\\n` +\n    `• <b>Maior Plano Cotado:</b> ${formatMoney(maior)}/mês\\n` +\n    `• <b>Total Simulado (Pipeline):</b> ${formatMoney(valorTotalGeral)}/mês\\n` +\n    `• <b>Receita Fechada (Recorrente):</b> <b>${formatMoney(somaFechados)}/mês</b>`;\n} else if (action === 'ultima' || action.includes('ultima') || action.includes('ultimo')) {\n  const q = quotes[0];\n  if (q) {\n    const waLink = `https://wa.me/${cleanPhone(q.whatsapp)}`;\n    const extras = Array.isArray(q.opcionais) && q.opcionais.length > 0 \n      ? q.opcionais.map(o => o.title).join(', ') \n      : 'Nenhum opcional selecionado';\n\n    mensagem = `🚀 <b>ÚLTIMA COTAÇÃO RECEBIDA</b>\\n\\n` +\n      `👤 <b>Cliente:</b> ${q.nome || 'Cliente'}\\n` +\n      `📱 <b>WhatsApp:</b> ${q.whatsapp || '-'}\\n` +\n      `📄 <b>CPF:</b> ${q.cpf || 'Não informado'}\\n` +\n      `🚘 <b>Faixa FIPE:</b> ${q.fipe_faixa || '-'}\\n` +\n      `🚛 <b>Guincho:</b> ${q.reboque || '-'}\\n` +\n      `✨ <b>Opcionais:</b> ${extras}\\n` +\n      `💰 <b>Valor Mensal:</b> <b>${formatMoney(q.valor_total)}/mês</b>\\n` +\n      `📅 <b>Data:</b> ${getBRDateTime(q.created_at)}\\n` +\n      `📌 <b>Status:</b> ${q.status || 'Novo'}\\n\\n` +\n      `👉 <a href=\"${waLink}\"><b>CLIQUE AQUI PARA FALAR COM O CLIENTE NO WHATSAPP</b></a>`;\n  } else {\n    mensagem = `<i>Nenhuma cotação registrada no banco de dados.</i>`;\n  }\n} else if (action === 'total' || action.includes('total')) {\n  mensagem = `📈 <b>PANORAMA GERAL DE COTAÇÕES</b>\\n\\n` +\n    `📊 <b>Total Acumulado:</b> <b>${totalGeral} cotações</b>\\n` +\n    `💰 <b>Pipeline Total Simulado:</b> <b>${formatMoney(valorTotalGeral)}/mês</b>\\n` +\n    `🎯 <b>Ticket Médio Geral:</b> <b>${formatMoney(ticketMedioGeral)}/mês</b>\\n\\n` +\n    `📌 <b>Distribuição por Status:</b>\\n` +\n    `• ⏳ Novos / A Contatar: <b>${cotacoesPendentes.length}</b>\\n` +\n    `• 💬 Em Atendimento: <b>${cotacoesEmContato.length}</b>\\n` +\n    `• 🤝 Cotações Fechadas: <b>${cotacoesFechadas.length}</b>\\n` +\n    `• ❌ Canceladas: <b>${quotes.filter(q => q.status === 'Cancelado').length}</b>`;\n} else {\n  // Menu / Início / Qualquer outra mensagem\n  mensagem = `👋 Olá! Sou o <b>Assistente de Gestão da Valoriza Car</b>.\\n\\n` +\n    `Aqui está o resumo instantâneo da sua operação:\\n` +\n    `• 📅 <b>Cotações hoje:</b> <b>${cotacoesHoje.length}</b> (${formatMoney(valorTotalHoje)}/mês)\\n` +\n    `• ⏳ <b>Aguardando contato:</b> <b>${cotacoesPendentes.length}</b>\\n` +\n    `• 📈 <b>Total acumulado:</b> <b>${totalGeral} cotações</b>\\n` +\n    `• 💰 <b>Ticket médio:</b> ${formatMoney(ticketMedioGeral)}/mês\\n\\n` +\n    `👇 <i>Toque em um dos botões abaixo para consultar:</i>`;\n}\n\nreturn [{\n  json: {\n    chatId,\n    action,\n    mensagem\n  }\n}];"
+      },
+      "id": "a1b2c3d4-0003-4000-8000-000000000003",
+      "name": "Processar Métricas e Mensagem",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        700,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "sendMessage",
+        "chatId": "={{ $json.chatId }}",
+        "text": "={{ $json.mensagem }}",
+        "additionalFields": {
+          "parse_mode": "HTML"
+        },
+        "replyMarkup": "inlineKeyboard",
+        "inlineKeyboard": {
+          "rows": [
+            {
+              "row": {
+                "buttons": [
+                  {
+                    "text": "📅 Cotações de Hoje",
+                    "additionalFields": {
+                      "callback_data": "hoje"
+                    }
+                  },
+                  {
+                    "text": "📈 Total Geral",
+                    "additionalFields": {
+                      "callback_data": "total"
+                    }
+                  }
+                ]
+              }
+            },
+            {
+              "row": {
+                "buttons": [
+                  {
+                    "text": "⏳ Pendentes de Contato",
+                    "additionalFields": {
+                      "callback_data": "pendentes"
+                    }
+                  },
+                  {
+                    "text": "💰 Ticket Médio",
+                    "additionalFields": {
+                      "callback_data": "ticket"
+                    }
+                  }
+                ]
+              }
+            },
+            {
+              "row": {
+                "buttons": [
+                  {
+                    "text": "🚀 Última Cotação",
+                    "additionalFields": {
+                      "callback_data": "ultima"
+                    }
+                  },
+                  {
+                    "text": "📊 Painel Geral",
+                    "additionalFields": {
+                      "callback_data": "menu"
+                    }
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      },
+      "id": "a1b2c3d4-0004-4000-8000-000000000004",
+      "name": "Responder no Telegram",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        940,
+        300
+      ]
+    }
+  ],
+  "connections": {
+    "Telegram Trigger": {
+      "main": [
+        [
+          {
+            "node": "Consultar Supabase",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Consultar Supabase": {
+      "main": [
+        [
+          {
+            "node": "Processar Métricas e Mensagem",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Processar Métricas e Mensagem": {
+      "main": [
+        [
+          {
+            "node": "Responder no Telegram",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "pinData": {},
+  "settings": {
+    "executionOrder": "v1"
+  }
+}
