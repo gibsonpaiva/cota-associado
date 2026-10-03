@@ -1958,9 +1958,9 @@
       // Bold **text**
       safe = safe.replace(/\*\*(.*?)\*\*/g, '<strong class="text-valoriza-dark font-bold">$1</strong>');
       // Lists (lines starting with • or - )
-      safe = safe.replace(/^[•\-]\s*(.*)$/gm, '<li class="ml-3.5 list-disc">$1</li>');
+      safe = safe.replace(/^[•\-]\s*(.*)$/gm, '<li class="ml-2">$1</li>');
       // Wrap consecutive <li> into <ul>
-      safe = safe.replace(/(<li.*<\/li>\n?)+/g, '<ul class="my-1.5 space-y-1 text-xs">$0</ul>');
+      safe = safe.replace(/(?:<li[^>]*>.*?<\/li>\s*)+/g, (match) => `<ul class="my-2 space-y-1 text-xs list-disc pl-4 text-slate-700">${match}</ul>`);
       // Newlines to <br/>
       safe = safe.replace(/\n/g, '<br/>');
       return safe;
@@ -2577,10 +2577,40 @@ Para começarmos, **qual é o seu nome e qual o modelo/ano do seu carro?** (Ou e
     function generateLocalAiReply(text) {
       const lower = text.toLowerCase();
 
-      // Extrai possíveis informações
+      // FAQ / Dúvidas pós-cotação
+      if (lower.includes('carencia') || lower.includes('carência')) {
+        return {
+          reply: `Ótima pergunta! Na **Valoriza Car** a sua proteção veicular começa a valer logo após a aprovação da vistoria digital (feita pelo próprio celular)! 📱⚡\n\nNão temos carências abusivas para roubo, furto, colisão ou assistência 24h. Ficou mais alguma dúvida?`,
+          plano: null,
+          quickReplies: ['Como funciona o guincho?', 'Consulta SPC/Serasa?', 'Quero contratar!']
+        };
+      }
+      if (lower.includes('spc') || lower.includes('serasa') || lower.includes('nome sujo') || lower.includes('score')) {
+        return {
+          reply: `Pode ficar tranquilo(a)! Na **Valoriza Car** nós **não fazemos consulta ao SPC ou Serasa** e não exigimos análise de perfil de condutor. Qualquer pessoa habilitada pode conduzir seu veículo protegido! 🚗🛡️`,
+          plano: null,
+          quickReplies: ['Tem carência?', 'Como funciona o guincho?', 'Quero contratar!']
+        };
+      }
+      if (lower.includes('guincho') || lower.includes('reboque')) {
+        return {
+          reply: `Nosso serviço de guincho e assistência funciona **24 horas por dia, 7 dias por semana**, em todo o território nacional! 🚛✨\n\nEm qualquer emergência com pane elétrica, mecânica ou colisão, basta ligar no nosso 0800 007 9300 ou acionar pelo WhatsApp que o resgate é enviado até você.`,
+          plano: null,
+          quickReplies: ['Tem carência?', 'Consulta SPC/Serasa?', 'Quero contratar!']
+        };
+      }
+      if (lower.includes('franquia') || lower.includes('participação') || lower.includes('cota')) {
+        return {
+          reply: `Trabalhamos com uma cota de participação justa e transparente, aplicada apenas em casos de conserto parcial em oficina. Em casos de Roubo ou Furto sem recuperação do veículo (Perda Total), você recebe até 100% da Tabela FIPE integral sem pagar franquia! 💰🛡️`,
+          plano: null,
+          quickReplies: ['Como funciona o guincho?', 'Tem carência?', 'Quero contratar!']
+        };
+      }
+
+      // Extrai possíveis informações do perfil do usuário
       if (lower.includes('uber') || lower.includes('99') || lower.includes('app') || lower.includes('passageiro') || lower.includes('entrega')) {
         userVehicleProfile.usage = 'uber';
-      } else if (lower.includes('viagem') || lower.includes('viajar') || lower.includes('estrada') || lower.includes('rodovia') || lower.includes('km')) {
+      } else if (lower.includes('viagem') || lower.includes('viajar') || lower.includes('estrada') || lower.includes('rodovia') || lower.includes('km') || lower.includes('espirito santo') || lower.includes('rio') || lower.includes('sao paulo')) {
         userVehicleProfile.usage = 'viagem';
       } else if (lower.includes('cidade') || lower.includes('urbano') || lower.includes('dia a dia') || lower.includes('trabalho')) {
         userVehicleProfile.usage = 'cidade';
@@ -2599,33 +2629,49 @@ Para começarmos, **qual é o seu nome e qual o modelo/ano do seu carro?** (Ou e
       // Turno 1: Descoberta de uso e rotina
       if (chatConversationTurn <= 1 && !userVehicleProfile.usage) {
         return {
-          reply: `Excelente! 🚗 Anotei por aqui.\n\nPara eu calibrar o alcance de guincho e as assistências ideais: **como é a sua rotina com o veículo?** Você roda mais na cidade, costuma viajar aos finais de semana, ou trabalha com transporte de passageiros (Uber/99)?`,
+          reply: `Excelente! 🚗 Anotei por aqui com carinho.\n\nPara eu calibrar o alcance de guincho e a proteção exata para você: **como é a sua rotina com o veículo?** Você roda mais no dia a dia da cidade, costuma pegar rodovias/viajar aos fins de semana, ou trabalha com transporte de passageiros (Uber/99/entregas)?`,
           plano: null,
           quickReplies: [
-            'Rodo somente na cidade',
-            'Trabalho com Uber / 99',
-            'Faço viagens frequentes com a família'
+            'Rodo apenas na cidade',
+            'Pego estrada e viajo com frequência',
+            'Trabalho com Uber / 99 / Entregas'
           ]
         };
       }
 
-      // Turno 2: Preferências de Coberturas Chave (Carro Reserva e Terceiros)
-      if (chatConversationTurn === 2 && (userVehicleProfile.wantsReserva === null || userVehicleProfile.wantsTerceiros === null)) {
+      // Turno 2: Dependência e Carro Reserva
+      if (chatConversationTurn === 2 && userVehicleProfile.wantsReserva === null) {
         return {
-          reply: `Perfeito! Já estou definindo a melhor quilometragem de reboque para o seu perfil. 🛡️\n\nAgora sobre a sua tranquilidade: você gostaria de incluir **Carro Reserva** (para não ficar a pé durante eventuais consertos) e **Cobertura para Danos a Terceiros**?`,
+          reply: `Perfeito! Entendido. 🛡️\n\nAgora sobre a sua rotina: se o seu carro precisar passar alguns dias na oficina por conta de uma colisão ou reparo, você consegue se virar ou o **Carro Reserva** é essencial para você não ficar a pé?`,
           plano: null,
           quickReplies: [
-            'Sim, quero Carro Reserva e Terceiros',
-            'Apenas o plano mais econômico',
-            'Quero o pacote completo com vidros'
+            'Carro Reserva 7 dias (+R$ 18,00)',
+            'Carro Reserva 15 dias (+R$ 29,90)',
+            'Não preciso de carro reserva'
           ]
         };
       }
 
-      // Turno 3 ou Decisão: Formular Plano Recomendado
+      // Turno 3: Vidros e Cobertura para Danos a Terceiros
+      if (chatConversationTurn === 3 && (userVehicleProfile.wantsTerceiros === null || userVehicleProfile.wantsVidros === null)) {
+        return {
+          reply: `Ótimo! Para fecharmos uma proposta impecável: tanto na cidade quanto na estrada, pedras no para-brisa e acidentes com retrovisores são muito comuns.\n\nVocê faz questão da **Proteção Completa de Vidros/Faróis** (+R$ 19,90) e cobertura para **Danos a Terceiros** caso se envolva em uma batida com outro carro?`,
+          plano: null,
+          quickReplies: [
+            'Quero Vidros e Terceiros R$ 50 mil',
+            'Apenas Danos a Terceiros R$ 30 mil',
+            'Apenas o pacote mais econômico'
+          ]
+        };
+      }
+
+      // Turno 4 ou Decisão: Formular Plano Recomendado
       let fipeFaixa = 'Até R$ 50 mil';
       let fipeAdicional = 0;
-      if (lower.includes('80') || lower.includes('suv') || lower.includes('compass') || lower.includes('corolla') || lower.includes('civic') || lower.includes('t-cross')) {
+      if (lower.includes('hilux') || lower.includes('sw4') || lower.includes('ram') || lower.includes('ranger') || lower.includes('s10') || lower.includes('bmw') || lower.includes('audi') || lower.includes('80') || lower.includes('100') || lower.includes('2026') || lower.includes('2025')) {
+        fipeFaixa = 'Acima de R$ 80 mil';
+        fipeAdicional = 50;
+      } else if (lower.includes('suv') || lower.includes('compass') || lower.includes('corolla') || lower.includes('civic') || lower.includes('t-cross') || lower.includes('creta') || lower.includes('renegade')) {
         fipeFaixa = 'De R$ 50 mil a R$ 80 mil';
         fipeAdicional = 25;
       }
@@ -2636,21 +2682,21 @@ Para começarmos, **qual é o seu nome e qual o modelo/ano do seu carro?** (Ou e
       let justificativa = '';
 
       if (userVehicleProfile.usage === 'uber') {
-        reboque = 'Reboque 200 km';
-        reboqueValor = 14.90;
+        reboque = 'Reboque 500 km';
+        reboqueValor = 29.90;
         opcionais.push({ id: 'app-driver', title: 'Pacote Motorista de App / Entregador', price: 29.90 });
         opcionais.push({ id: 'reserva-7', title: 'Carro Reserva 7 dias', price: 18.00 });
         opcionais.push({ id: 'terceiros-50', title: 'Danos a Terceiros R$ 50.000', price: 24.90 });
         opcionais.push({ id: 'vidros', title: 'Proteção de Vidros Completa', price: 19.90 });
-        justificativa = 'Montei uma proteção especial para quem trabalha com o carro: cobertura ampliada para terceiros (R$ 50 mil), carro reserva para não perder dias de faturamento e pacote específico para motorista de aplicativo.';
-      } else if (userVehicleProfile.usage === 'viagem' || lower.includes('viagen') || lower.includes('estrada')) {
+        justificativa = 'Montei uma proteção especial para quem trabalha com o carro: cobertura ampliada para terceiros (R$ 50 mil), carro reserva para não perder dias de trabalho e pacote homologado para aplicativo.';
+      } else if (userVehicleProfile.usage === 'viagem' || lower.includes('viagen') || lower.includes('estrada') || lower.includes('espirito santo')) {
         reboque = 'Reboque 500 km';
         reboqueValor = 29.90;
         opcionais.push({ id: 'vidros', title: 'Proteção de Vidros Completa', price: 19.90 });
         opcionais.push({ id: 'reserva-7', title: 'Carro Reserva 7 dias', price: 18.00 });
         opcionais.push({ id: 'terceiros-50', title: 'Danos a Terceiros R$ 50.000', price: 24.90 });
         opcionais.push({ id: 'combustivel', title: 'Auxílio Combustível', price: 6.90 });
-        justificativa = 'Para quem viaja em rodovias, o reboque de 500 km garante resgate mesmo longe de casa, além de proteção completa de vidros/retrovisores e socorro para pane seca.';
+        justificativa = 'Para quem viaja em rodovias interestaduais, o reboque de 500 km garante resgate longe de casa, além de proteção de vidros/faróis, carro reserva de 7 dias e socorro para pane seca.';
       } else if (lower.includes('econômico') || lower.includes('economico') || lower.includes('apenas o essencial')) {
         reboque = 'Reboque 100 km';
         reboqueValor = 0;
@@ -2663,7 +2709,7 @@ Para começarmos, **qual é o seu nome e qual o modelo/ano do seu carro?** (Ou e
         opcionais.push({ id: 'vidros', title: 'Proteção de Vidros Completa', price: 19.90 });
         opcionais.push({ id: 'reserva-7', title: 'Carro Reserva 7 dias', price: 18.00 });
         opcionais.push({ id: 'terceiros-30', title: 'Danos a Terceiros R$ 30.000', price: 16.90 });
-        justificativa = 'Nosso plano campeão de escolha: cobre deslocamentos na cidade e escapadas no fim de semana, com carro reserva e proteção para terceiros caso ocorra algum imprevisto.';
+        justificativa = 'Nosso plano campeão de escolha: cobre deslocamentos na cidade e escapadas no fim de semana, com carro reserva de 7 dias e proteção para terceiros caso ocorra algum imprevisto.';
       }
 
       const totalExtras = opcionais.reduce((sum, item) => sum + item.price, 0);
@@ -2681,9 +2727,9 @@ Para começarmos, **qual é o seu nome e qual o modelo/ano do seu carro?** (Ou e
       };
 
       return {
-        reply: `Prontinho! Analisei o seu perfil e estruturei a melhor proposta para você com ótimo custo-benefício. 🚗✨\n\nConfira os detalhes abaixo no cartão que acabei de gerar. Você pode garantir este plano diretamente no WhatsApp ou clicar para ajustar cada item no simulador manual:`,
+        reply: `Prontinho! Analisei todo o seu perfil e estruturei a melhor proposta para o seu veículo com ótimo custo-benefício. 🚗✨\n\nConfira os detalhes no cartão que acabei de gerar abaixo. Você pode garantir este plano diretamente no WhatsApp ou clicar para ajustar cada item no simulador manual.\n\nFicou alguma dúvida sobre alguma cobertura ou assistência? Se quiser trocar ou tirar qualquer item para ajustar o valor, é só me falar!`,
         plano: planData,
-        quickReplies: []
+        quickReplies: ['Quero contratar!', 'Tem carência?', 'Como funciona o guincho?', 'Sem consulta ao SPC?']
       };
     }
 
