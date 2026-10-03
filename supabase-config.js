@@ -4,10 +4,12 @@ const SUPABASE_CONFIG = {
   publishableKey: 'sb_publishable_154zsERKBGrEzzDrRA4CfQ_dZz2G3so'
 };
 
-// Configuração do Webhook N8N para Notificações (Telegram & Gmail)
+// Configuração dos Webhooks N8N (Notificações e Chatbot IA)
 const N8N_CONFIG = {
-  // URL do webhook do N8N (pode ser preenchida aqui ou salva pelo painel admin)
-  webhookUrl: localStorage.getItem('valoriza_n8n_webhook_url') || ''
+  // Webhook de Notificações (Telegram & Gmail)
+  webhookUrl: localStorage.getItem('valoriza_n8n_webhook_url') || '',
+  // Webhook do Chatbot IA com Gemini
+  chatWebhookUrl: localStorage.getItem('valoriza_n8n_chat_webhook_url') || ''
 };
 
 // Inicializa a instância do Supabase caso a biblioteca JS esteja carregada

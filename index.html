@@ -269,8 +269,39 @@
   </section>
 
   <!-- Conteúdo Principal: Configurador (Esquerda) + Resumo Sticky (Direita) -->
-  <main id="configurador" class="max-w-6xl mx-auto px-4 sm:px-6 pt-8 sm:pt-10 flex-1 w-full">
-    <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+  <main id="configurador" class="max-w-6xl mx-auto px-4 sm:px-6 pt-6 sm:pt-8 flex-1 w-full">
+
+    <!-- ==========================================
+         SELETOR DE MODO: MANUAL vs ASSISTENTE IA
+         ========================================== -->
+    <div class="flex items-center justify-center p-1.5 bg-slate-200/80 rounded-2xl max-w-md mx-auto mb-8 border border-slate-300/80 shadow-xs">
+      <button 
+        type="button" 
+        id="mode-tab-manual" 
+        class="flex-1 py-2.5 px-3.5 rounded-xl font-heading font-bold text-xs sm:text-sm transition-all flex items-center justify-center gap-2 bg-white text-valoriza-blue shadow-xs"
+      >
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4"/></svg>
+        <span>Montar Manual</span>
+      </button>
+
+      <button 
+        type="button" 
+        id="mode-tab-ai" 
+        class="flex-1 py-2.5 px-3.5 rounded-xl font-heading font-bold text-xs sm:text-sm transition-all flex items-center justify-center gap-2 text-valoriza-slate hover:text-valoriza-dark relative"
+      >
+        <span class="relative flex h-2 w-2">
+          <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-valoriza-yellow opacity-80"></span>
+          <span class="relative inline-flex rounded-full h-2 w-2 bg-valoriza-yellow"></span>
+        </span>
+        <svg class="w-4 h-4 text-purple-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+        <span>Assistente IA</span>
+        <span class="text-[9px] uppercase font-extrabold px-1.5 py-0.5 rounded bg-purple-100 text-purple-700">Novo</span>
+      </button>
+    </div>
+
+    <!-- Visão 1: Simulador Manual (Original) -->
+    <div id="manual-view" class="transition-opacity duration-300">
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
 
       <!-- Coluna de Passos (8 colunas no Desktop) -->
       <div class="lg:col-span-7 xl:col-span-8 space-y-6 sm:space-y-8">
@@ -1005,7 +1036,121 @@
       </aside>
 
     </div>
+    </div> <!-- /manual-view -->
+
+    <!-- ==========================================
+         VISÃO 2: CHATBOT CONSULTOR COM IA (VALÉRIA)
+         ========================================== -->
+    <div id="ai-chat-view" class="hidden max-w-4xl mx-auto transition-opacity duration-300">
+      <div class="bg-white rounded-3xl border border-slate-200/90 shadow-card overflow-hidden flex flex-col min-h-[580px] max-h-[820px]">
+        
+        <!-- Header do Chat -->
+        <div class="p-4 sm:p-5 bg-gradient-to-r from-valoriza-dark via-[#1c2a38] to-[#15202b] text-white flex items-center justify-between border-b border-white/10">
+          <div class="flex items-center gap-3">
+            <div class="relative shrink-0">
+              <div class="w-11 h-11 rounded-2xl bg-gradient-to-tr from-valoriza-blue to-cyan-400 text-white flex items-center justify-center font-heading font-extrabold text-base shadow-sm">
+                V
+              </div>
+              <span class="absolute bottom-0 right-0 w-3 h-3 rounded-full bg-emerald-500 border-2 border-valoriza-dark"></span>
+            </div>
+            <div>
+              <div class="flex items-center gap-2 flex-wrap">
+                <h3 class="font-heading font-bold text-sm sm:text-base text-white">Valéria • Consultora IA</h3>
+                <span class="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-valoriza-yellow/20 text-valoriza-yellow border border-valoriza-yellow/30 hidden sm:inline-block">
+                  Google Gemini
+                </span>
+              </div>
+              <p class="text-xs text-white/70 flex items-center gap-1.5 mt-0.5">
+                <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+                <span>Online agora • Te ajuda a montar o plano perfeito</span>
+              </p>
+            </div>
+          </div>
+
+          <div class="flex items-center gap-2">
+            <button 
+              type="button" 
+              id="reset-chat-btn" 
+              title="Reiniciar conversa do início"
+              class="p-2 sm:px-3 rounded-xl bg-white/10 hover:bg-white/20 text-white/90 hover:text-white transition-colors text-xs flex items-center gap-1.5"
+            >
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+              <span class="hidden sm:inline">Reiniciar</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Área de Mensagens (Scrollable) -->
+        <div id="chat-messages-container" class="flex-1 p-4 sm:p-6 overflow-y-auto space-y-4 custom-scrollbar bg-slate-50/60 text-xs sm:text-sm">
+          <!-- Mensagens geradas via JavaScript -->
+        </div>
+
+        <!-- Indicador de Digitação (Typing Indicator) -->
+        <div id="chat-typing-indicator" class="hidden px-5 py-2.5 bg-slate-50 border-t border-slate-100 flex items-center gap-2 text-xs text-valoriza-slate">
+          <div class="flex items-center gap-1">
+            <span class="w-2 h-2 rounded-full bg-valoriza-blue animate-bounce"></span>
+            <span class="w-2 h-2 rounded-full bg-valoriza-blue animate-bounce [animation-delay:0.2s]"></span>
+            <span class="w-2 h-2 rounded-full bg-valoriza-blue animate-bounce [animation-delay:0.4s]"></span>
+          </div>
+          <span>Valéria está analisando seu perfil...</span>
+        </div>
+
+        <!-- Barra Inferior de Entrada -->
+        <div class="p-3 sm:p-4 bg-white border-t border-slate-200">
+          <!-- Sugestões Rápidas de Resposta (Chips) -->
+          <div id="chat-quick-replies" class="flex items-center gap-2 overflow-x-auto pb-2.5 mb-1 custom-scrollbar">
+            <!-- Chips gerados dinamicamente via JS -->
+          </div>
+
+          <form id="chat-form" class="flex items-center gap-2">
+            <input 
+              type="text" 
+              id="chat-input-text" 
+              placeholder="Digite sua resposta ou dúvida..." 
+              autocomplete="off"
+              class="flex-1 py-3 px-4 rounded-xl border border-slate-200 bg-slate-50 focus:bg-white text-xs sm:text-sm text-valoriza-dark focus:outline-none focus:ring-2 focus:ring-valoriza-blue/25 focus:border-valoriza-blue transition-all"
+            />
+            <button 
+              type="submit" 
+              id="chat-send-btn" 
+              class="py-3 px-5 rounded-xl bg-valoriza-blue hover:bg-valoriza-blueDark text-white font-heading font-semibold text-xs sm:text-sm transition-all shadow-sm flex items-center gap-1.5 shrink-0"
+            >
+              <span>Enviar</span>
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>
+            </button>
+          </form>
+          <p class="text-[11px] text-center text-valoriza-muted mt-2">
+            A Valéria calcula o valor em tempo real com base na tabela oficial da Valoriza Car.
+          </p>
+        </div>
+
+      </div>
+    </div>
   </main>
+
+  <!-- ==========================================
+       BOTÃO FLUTUANTE DA CONSULTORA IA (FAB)
+       ========================================== -->
+  <div class="fixed bottom-20 right-4 lg:bottom-8 lg:right-8 z-40">
+    <button 
+      type="button" 
+      id="floating-chat-btn" 
+      class="flex items-center gap-3 bg-gradient-to-r from-valoriza-blue via-[#0c7ab1] to-valoriza-dark text-white pl-3.5 pr-4 py-3 rounded-full shadow-2xl hover:shadow-cyan-500/25 hover:scale-105 active:scale-95 transition-all duration-300 border border-white/20 group cursor-pointer"
+      title="Abrir Assistente Virtual IA"
+    >
+      <div class="relative flex items-center justify-center w-10 h-10 rounded-full bg-white text-valoriza-blue font-heading font-extrabold text-base shadow-sm">
+        <span>V</span>
+        <span class="absolute -top-0.5 -right-0.5 flex h-3 w-3">
+          <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+          <span class="relative inline-flex rounded-full h-3 w-3 bg-emerald-500 border-2 border-white"></span>
+        </span>
+      </div>
+      <div class="text-left hidden sm:block">
+        <span class="text-[10px] font-bold uppercase tracking-wider text-valoriza-yellow block leading-none">Consultora IA</span>
+        <span class="font-heading font-bold text-xs text-white block mt-0.5">Montar com a Valéria</span>
+      </div>
+    </button>
+  </div>
 
   <!-- Rodapé Institucional Limpo -->
   <footer class="mt-16 border-t border-slate-200/80 bg-white py-8 text-xs text-valoriza-muted">
@@ -1752,6 +1897,690 @@
     // Scroll suave do botão do header
     function scrollToQuote() {
       document.getElementById('configurador').scrollIntoView({ behavior: 'smooth' });
+    }
+
+    // ==========================================
+    // CONTROLADOR DO CHATBOT CONSULTOR IA (VALÉRIA)
+    // ==========================================
+    const modeTabManual = document.getElementById('mode-tab-manual');
+    const modeTabAi = document.getElementById('mode-tab-ai');
+    const manualView = document.getElementById('manual-view');
+    const aiChatView = document.getElementById('ai-chat-view');
+    const floatingChatBtn = document.getElementById('floating-chat-btn');
+
+    const chatMessagesContainer = document.getElementById('chat-messages-container');
+    const chatTypingIndicator = document.getElementById('chat-typing-indicator');
+    const chatQuickReplies = document.getElementById('chat-quick-replies');
+    const chatForm = document.getElementById('chat-form');
+    const chatInputText = document.getElementById('chat-input-text');
+    const chatSendBtn = document.getElementById('chat-send-btn');
+    const resetChatBtn = document.getElementById('reset-chat-btn');
+
+    let chatHistory = [];
+    let isWaitingForAi = false;
+    let chatConversationTurn = 0;
+    let userVehicleProfile = {
+      name: '',
+      car: '',
+      usage: '', // 'cidade', 'uber', 'viagem'
+      wantsReserva: null,
+      wantsTerceiros: null,
+      wantsVidros: null
+    };
+
+    function escapeHtml(text) {
+      if (!text) return '';
+      return String(text)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+    }
+
+    function formatChatMessage(text) {
+      if (!text) return '';
+      // Escape HTML first for safety
+      let safe = escapeHtml(text);
+      // Bold **text**
+      safe = safe.replace(/\*\*(.*?)\*\*/g, '<strong class="text-valoriza-dark font-bold">$1</strong>');
+      // Lists (lines starting with • or - )
+      safe = safe.replace(/^[•\-]\s*(.*)$/gm, '<li class="ml-3.5 list-disc">$1</li>');
+      // Wrap consecutive <li> into <ul>
+      safe = safe.replace(/(<li.*<\/li>\n?)+/g, '<ul class="my-1.5 space-y-1 text-xs">$0</ul>');
+      // Newlines to <br/>
+      safe = safe.replace(/\n/g, '<br/>');
+      return safe;
+    }
+
+    function scrollChatToBottom() {
+      if (chatMessagesContainer) {
+        setTimeout(() => {
+          chatMessagesContainer.scrollTop = chatMessagesContainer.scrollHeight;
+        }, 50);
+      }
+    }
+
+    // Alternar entre Simulador Manual e Chat IA
+    function switchMode(mode) {
+      if (mode === 'manual') {
+        manualView.classList.remove('hidden');
+        aiChatView.classList.add('hidden');
+        modeTabManual.className = 'flex-1 py-2.5 px-3.5 rounded-xl font-heading font-bold text-xs sm:text-sm transition-all flex items-center justify-center gap-2 bg-white text-valoriza-blue shadow-xs';
+        modeTabAi.className = 'flex-1 py-2.5 px-3.5 rounded-xl font-heading font-bold text-xs sm:text-sm transition-all flex items-center justify-center gap-2 text-valoriza-slate hover:text-valoriza-dark relative';
+      } else {
+        manualView.classList.add('hidden');
+        aiChatView.classList.remove('hidden');
+        modeTabAi.className = 'flex-1 py-2.5 px-3.5 rounded-xl font-heading font-bold text-xs sm:text-sm transition-all flex items-center justify-center gap-2 bg-white text-valoriza-blue shadow-xs relative';
+        modeTabManual.className = 'flex-1 py-2.5 px-3.5 rounded-xl font-heading font-bold text-xs sm:text-sm transition-all flex items-center justify-center gap-2 text-valoriza-slate hover:text-valoriza-dark';
+        
+        if (chatMessagesContainer.children.length === 0) {
+          initChat();
+        }
+        setTimeout(() => {
+          if (chatInputText) chatInputText.focus();
+        }, 120);
+      }
+    }
+
+    if (modeTabManual) modeTabManual.addEventListener('click', () => switchMode('manual'));
+    if (modeTabAi) {
+      modeTabAi.addEventListener('click', () => {
+        switchMode('ai');
+        scrollToQuote();
+      });
+    }
+    if (floatingChatBtn) {
+      floatingChatBtn.addEventListener('click', () => {
+        switchMode('ai');
+        scrollToQuote();
+      });
+    }
+
+    // Inicializa a conversa da IA
+    function initChat() {
+      chatMessagesContainer.innerHTML = '';
+      chatHistory = [];
+      chatConversationTurn = 0;
+      userVehicleProfile = {
+        name: nameInput.value.trim(),
+        car: '',
+        usage: '',
+        wantsReserva: null,
+        wantsTerceiros: null,
+        wantsVidros: null
+      };
+
+      const introText = `Olá! Sou a **Valéria**, consultora virtual da **Valoriza Car**! 🚗✨
+
+Estou aqui para te ajudar a montar a proteção veicular ideal em menos de 2 minutos, sob medida para a sua rotina e pelo menor valor mensal.
+
+Para começarmos, **qual é o seu nome e qual o modelo/ano do seu carro?** (Ou escolha uma das opções rápidas abaixo!)`;
+
+      appendAiMessage(introText);
+      renderQuickReplies([
+        '🚗 Carro popular (até R$ 50 mil)',
+        '💼 Trabalho com Uber / 99 / App',
+        '🛣️ Costumo viajar e preciso de reboque longo',
+        '🛡️ Quero a proteção mais completa'
+      ]);
+    }
+
+    if (resetChatBtn) {
+      resetChatBtn.addEventListener('click', () => {
+        if (confirm('Deseja reiniciar a conversa com a Valéria do início?')) {
+          initChat();
+        }
+      });
+    }
+
+    function renderQuickReplies(replies) {
+      chatQuickReplies.innerHTML = '';
+      if (!replies || replies.length === 0) {
+        chatQuickReplies.classList.add('hidden');
+        return;
+      }
+      chatQuickReplies.classList.remove('hidden');
+      replies.forEach(text => {
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'whitespace-nowrap px-3 py-1.5 rounded-full text-xs font-medium bg-slate-100 hover:bg-valoriza-blueLight text-slate-700 hover:text-valoriza-blue transition-colors border border-slate-200 shrink-0 cursor-pointer';
+        btn.textContent = text;
+        btn.addEventListener('click', () => {
+          chatInputText.value = text;
+          handleChatSubmit();
+        });
+        chatQuickReplies.appendChild(btn);
+      });
+    }
+
+    function appendUserMessage(text) {
+      const wrapper = document.createElement('div');
+      wrapper.className = 'flex items-start justify-end gap-2.5';
+      wrapper.innerHTML = `
+        <div class="bg-valoriza-blue text-white rounded-2xl rounded-tr-xs px-4 py-3 max-w-[85%] sm:max-w-[75%] shadow-xs text-xs sm:text-sm">
+          <p class="leading-relaxed whitespace-pre-wrap">${escapeHtml(text)}</p>
+        </div>
+      `;
+      chatMessagesContainer.appendChild(wrapper);
+      scrollChatToBottom();
+    }
+
+    function appendAiMessage(text, planData = null) {
+      const wrapper = document.createElement('div');
+      wrapper.className = 'flex items-start gap-2.5';
+
+      const formattedText = formatChatMessage(text);
+      let planHtml = '';
+      if (planData) {
+        planHtml = renderRecommendationCardHtml(planData);
+      }
+
+      wrapper.innerHTML = `
+        <div class="w-8 h-8 rounded-xl bg-gradient-to-tr from-valoriza-blue to-cyan-400 text-white flex items-center justify-center font-heading font-extrabold text-xs shrink-0 shadow-xs mt-1">
+          V
+        </div>
+        <div class="space-y-3 max-w-[92%] sm:max-w-[85%]">
+          <div class="bg-white border border-slate-200/90 text-valoriza-dark rounded-2xl rounded-tl-xs px-4 py-3 shadow-xs">
+            <div class="leading-relaxed space-y-1.5 text-xs sm:text-sm text-valoriza-charcoal">${formattedText}</div>
+          </div>
+          ${planHtml}
+        </div>
+      `;
+      chatMessagesContainer.appendChild(wrapper);
+      scrollChatToBottom();
+    }
+
+    // Renderiza o Card de Recomendação de Plano
+    function renderRecommendationCardHtml(plan) {
+      const encodedPlan = encodeURIComponent(JSON.stringify(plan));
+      const currentName = nameInput.value.trim();
+      const currentPhone = phoneInput.value.trim();
+
+      let extrasHtml = '';
+      if (Array.isArray(plan.opcionais) && plan.opcionais.length > 0) {
+        extrasHtml = plan.opcionais.map(o => `
+          <li class="flex items-center justify-between text-xs text-slate-700 bg-slate-50 px-2.5 py-1.5 rounded-lg border border-slate-100">
+            <span class="flex items-center gap-1.5">
+              <svg class="w-3.5 h-3.5 text-emerald-600 shrink-0" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
+              <span>${escapeHtml(o.title || o.id)}</span>
+            </span>
+            <span class="font-semibold text-valoriza-blue shrink-0">+R$ ${formatCurrencyNumber(o.price || 0)}</span>
+          </li>
+        `).join('');
+      } else {
+        extrasHtml = `<li class="text-xs text-slate-500 italic">Nenhum opcional extra (plano 100% econômico).</li>`;
+      }
+
+      return `
+        <div class="bg-white rounded-2xl border-2 border-valoriza-blue/80 shadow-md p-4 sm:p-5 space-y-3.5">
+          <div class="flex items-center justify-between gap-2 border-b border-slate-100 pb-3">
+            <div class="flex items-center gap-2">
+              <span class="p-1 rounded-lg bg-valoriza-blueLight text-valoriza-blue">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
+              </span>
+              <div>
+                <span class="text-[10px] font-bold uppercase tracking-wider text-valoriza-blue block">Plano Recomendado</span>
+                <h4 class="font-heading font-extrabold text-sm sm:text-base text-valoriza-dark">Proposta Personalizada</h4>
+              </div>
+            </div>
+            <div class="text-right">
+              <span class="text-[10px] text-valoriza-muted block">Mensalidade Total</span>
+              <span class="font-heading font-extrabold text-base sm:text-lg text-valoriza-blue">
+                R$ ${formatCurrencyNumber(plan.valor_total)}<span class="text-xs font-normal text-slate-500">/mês</span>
+              </span>
+            </div>
+          </div>
+
+          <div class="space-y-2 text-xs">
+            <div class="p-2.5 rounded-xl bg-slate-50/90 border border-slate-100 flex items-center justify-between">
+              <span class="text-slate-600">🛡️ Proteção Base (Roubo, Colisão, Danos Natureza):</span>
+              <span class="font-semibold text-slate-800">R$ 119,90/mês</span>
+            </div>
+
+            <div class="p-2.5 rounded-xl bg-slate-50/90 border border-slate-100 flex items-center justify-between">
+              <span class="text-slate-600">📊 Faixa Tabela FIPE:</span>
+              <span class="font-semibold text-slate-800">${escapeHtml(plan.fipe_faixa || 'Até R$ 50 mil')} ${plan.fipe_adicional > 0 ? `(+R$ ${formatCurrencyNumber(plan.fipe_adicional)})` : '(Base)'}</span>
+            </div>
+
+            <div class="p-2.5 rounded-xl bg-slate-50/90 border border-slate-100 flex items-center justify-between">
+              <span class="text-slate-600">🚛 Cobertura de Reboque:</span>
+              <span class="font-semibold text-slate-800">${escapeHtml(plan.reboque || 'Reboque 100 km')} ${plan.reboque_valor > 0 ? `(+R$ ${formatCurrencyNumber(plan.reboque_valor)})` : '(Incluso)'}</span>
+            </div>
+
+            <div class="space-y-1.5 pt-1">
+              <span class="font-semibold text-slate-700 block">✨ Opcionais Selecionados:</span>
+              <ul class="space-y-1.5">${extrasHtml}</ul>
+            </div>
+          </div>
+
+          ${plan.justificativa ? `
+            <div class="p-2.5 rounded-xl bg-amber-50/80 border border-amber-200/80 text-[11px] text-amber-900 leading-relaxed">
+              💡 <strong>Por que este plano?</strong> ${escapeHtml(plan.justificativa)}
+            </div>
+          ` : ''}
+
+          <!-- Dados de Contato e Botões de Ação -->
+          <div class="pt-3 border-t border-slate-100 space-y-2.5">
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+              <input 
+                type="text" 
+                id="chat-card-name" 
+                placeholder="Seu Nome Completo" 
+                value="${escapeHtml(currentName)}"
+                oninput="document.getElementById('user-name').value = this.value"
+                class="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 bg-slate-50 focus:bg-white text-valoriza-dark focus:outline-none focus:ring-1 focus:ring-valoriza-blue"
+              />
+              <input 
+                type="tel" 
+                id="chat-card-phone" 
+                placeholder="Seu WhatsApp (DDD + Número)" 
+                value="${escapeHtml(currentPhone)}"
+                oninput="document.getElementById('user-phone').value = this.value; maskPhoneInput(this);"
+                class="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 bg-slate-50 focus:bg-white text-valoriza-dark focus:outline-none focus:ring-1 focus:ring-valoriza-blue"
+              />
+            </div>
+
+            <div class="flex flex-col sm:flex-row gap-2">
+              <button 
+                type="button" 
+                onclick="contractFromChatCard('${encodedPlan}')"
+                class="flex-1 py-3 px-4 rounded-xl bg-valoriza-green hover:bg-[#1e8e48] text-white font-heading font-bold text-xs shadow-md flex items-center justify-center gap-2 transition-all cursor-pointer"
+              >
+                <svg class="w-4 h-4 fill-current shrink-0" viewBox="0 0 24 24"><path d="M12.031 6.172c-3.181 0-5.767 2.586-5.768 5.766-.001 1.298.38 2.27 1.019 3.287l-.582 2.128 2.182-.573c.978.58 1.911.928 3.145.929 3.178 0 5.767-2.587 5.768-5.766.001-3.187-2.575-5.77-5.764-5.771zm3.392 8.244c-.144.405-.837.774-1.17.824-.299.045-.677.063-1.092-.069-.252-.08-.575-.187-.988-.365-1.739-.751-2.874-2.502-2.961-2.617-.087-.116-.708-.94-.708-1.793s.448-1.273.607-1.446c.159-.173.346-.217.462-.217l.332.006c.106.005.249-.04.39.298.144.347.491 1.2.534 1.287.043.087.072.188.014.304-.058.116-.087.188-.173.289l-.26.304c-.087.086-.177.18-.076.354.101.174.449.741.964 1.201.662.591 1.221.774 1.394.86s.274.072.376-.043c.101-.116.433-.506.549-.68.116-.173.231-.145.39-.087s1.011.477 1.184.564.289.13.332.202c.045.072.045.419-.1.824zm-3.423-14.416c-6.627 0-12 5.373-12 12 0 2.625.846 5.059 2.284 7.033l-1.494 5.459 5.601-1.469c1.914 1.252 4.198 1.977 6.609 1.977 6.627 0 12-5.373 12-12s-5.373-12-12-12z"/></svg>
+                <span>Garantir Este Plano no WhatsApp</span>
+              </button>
+
+              <button 
+                type="button" 
+                onclick="applyPlanToManualFormFromEncoded('${encodedPlan}')"
+                class="py-3 px-3.5 rounded-xl border border-slate-300 hover:border-valoriza-blue bg-white text-valoriza-dark hover:text-valoriza-blue font-heading font-semibold text-xs shadow-xs flex items-center justify-center gap-1.5 transition-colors cursor-pointer shrink-0"
+                title="Abrir este plano no simulador manual"
+              >
+                <svg class="w-3.5 h-3.5 text-valoriza-blue" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4"/></svg>
+                <span>Ajustar no Manual</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    // Ação: Fechar contratação pelo Chat (WhatsApp + Supabase + N8N)
+    window.contractFromChatCard = function(encodedPlan) {
+      let plan;
+      try {
+        plan = JSON.parse(decodeURIComponent(encodedPlan));
+      } catch (err) {
+        console.error('Erro ao ler dados do plano:', err);
+        return;
+      }
+
+      const cardNameInput = document.getElementById('chat-card-name');
+      const cardPhoneInput = document.getElementById('chat-card-phone');
+
+      let nameVal = cardNameInput && cardNameInput.value.trim() ? cardNameInput.value.trim() : nameInput.value.trim();
+      let phoneVal = cardPhoneInput && cardPhoneInput.value.trim() ? cardPhoneInput.value.trim() : phoneInput.value.trim();
+
+      if (!nameVal || nameVal.length < 3) {
+        alert('Por favor, informe seu nome completo no campo indicado no cartão.');
+        if (cardNameInput) cardNameInput.focus();
+        return;
+      }
+      const phoneDigits = phoneVal.replace(/\D/g, '');
+      if (phoneDigits.length < 10) {
+        alert('Por favor, informe seu WhatsApp com DDD para contato.');
+        if (cardPhoneInput) cardPhoneInput.focus();
+        return;
+      }
+
+      nameInput.value = nameVal;
+      phoneInput.value = phoneVal;
+
+      const payload = {
+        nome: nameVal,
+        whatsapp: phoneVal,
+        cpf: cpfInput.value.trim() || 'Via Chat IA',
+        fipe_faixa: plan.fipe_faixa || 'Até R$ 50 mil',
+        fipe_adicional: plan.fipe_adicional || 0,
+        reboque: plan.reboque || 'Reboque 100 km',
+        reboque_valor: plan.reboque_valor || 0,
+        opcionais: plan.opcionais || [],
+        valor_total: plan.valor_total || 119.90,
+        status: 'Novo',
+        origem: 'Chatbot IA (Valéria)'
+      };
+
+      // 1. Salvar no Supabase
+      saveQuoteToSupabase(payload);
+
+      // 2. Disparar Webhook N8N
+      sendToN8nWebhook(payload);
+
+      // 3. Montar mensagem de WhatsApp
+      const lines = [
+        `Olá! Estive conversando com a consultora *Valéria* no site da *Valoriza Car* e adorei o plano recomendado:`,
+        ``,
+        `👤 *Meus Dados:*`,
+        `• Nome: ${nameVal}`,
+        `• WhatsApp: ${phoneVal}`,
+        `• Faixa FIPE: ${payload.fipe_faixa}${payload.fipe_adicional > 0 ? ` (+R$ ${formatCurrencyNumber(payload.fipe_adicional)}/mês)` : ' (Valor base)'}`,
+        ``,
+        `🛡️ *Plano Base Incluso:*`,
+        `• Roubo, Furto, Colisão, Danos da Natureza e Assistência 24h: R$ ${formatCurrencyNumber(BASE_PRICE)}/mês`,
+        ``,
+        `🚛 *Alcance de Reboque:*`,
+        `• ${payload.reboque} (${payload.reboque_valor > 0 ? '+R$ ' + formatCurrencyNumber(payload.reboque_valor) + '/mês' : 'Incluso'})`
+      ];
+
+      if (Array.isArray(payload.opcionais) && payload.opcionais.length > 0) {
+        lines.push(``, `✨ *Coberturas Extras Selecionadas:*`);
+        payload.opcionais.forEach(o => {
+          lines.push(`• ${o.title}: +R$ ${formatCurrencyNumber(o.price)}/mês`);
+        });
+      }
+
+      lines.push(
+        ``,
+        `💰 *VALOR TOTAL: R$ ${formatCurrencyNumber(payload.valor_total)} / mês*`,
+        ``,
+        `Quero garantir essa cotação e finalizar minha adesão!`
+      );
+
+      const encodedMessage = encodeURIComponent(lines.join('\n'));
+      window.open(`https://wa.me/${WHATSAPP_NUMBER}?text=${encodedMessage}`, '_blank', 'noopener,noreferrer');
+    };
+
+    // Ação: Aplicar o plano recomendado aos controles do Simulador Manual
+    window.applyPlanToManualFormFromEncoded = function(encodedPlan) {
+      let plan;
+      try {
+        plan = JSON.parse(decodeURIComponent(encodedPlan));
+      } catch (err) {
+        console.error('Erro ao ler plano:', err);
+        return;
+      }
+      applyPlanToManualForm(plan);
+    };
+
+    function applyPlanToManualForm(plan) {
+      // 1. Faixa FIPE
+      if (plan.fipe_adicional !== undefined) {
+        if (plan.fipe_adicional === 50) fipeSelect.selectedIndex = 3;
+        else if (plan.fipe_adicional === 25) fipeSelect.selectedIndex = 2;
+        else fipeSelect.selectedIndex = 1;
+      } else if (plan.fipe_faixa) {
+        const text = plan.fipe_faixa.toLowerCase();
+        if (text.includes('80')) fipeSelect.selectedIndex = 3;
+        else if (text.includes('50') && text.includes('80')) fipeSelect.selectedIndex = 2;
+        else if (text.includes('30')) fipeSelect.selectedIndex = 0;
+        else fipeSelect.selectedIndex = 1;
+      }
+
+      fipePills.forEach((p, idx) => {
+        if (idx === fipeSelect.selectedIndex) {
+          p.className = 'fipe-pill text-xs py-2 px-2.5 rounded-lg border-2 border-valoriza-blue bg-valoriza-blueLight text-valoriza-blueDark transition-all font-semibold text-center';
+        } else {
+          p.className = 'fipe-pill text-xs py-2 px-2.5 rounded-lg border border-slate-200 bg-white text-valoriza-slate hover:border-valoriza-blue/50 transition-all font-medium text-center';
+        }
+      });
+
+      // 2. Reboque
+      towRadios.forEach(radio => {
+        const rTitle = radio.getAttribute('data-title') || '';
+        const rVal = parseFloat(radio.value);
+        let matches = false;
+        if (plan.reboque_valor !== undefined && Math.abs(rVal - plan.reboque_valor) < 0.05) {
+          matches = true;
+        } else if (plan.reboque && rTitle.toLowerCase().includes(plan.reboque.toLowerCase())) {
+          matches = true;
+        }
+
+        radio.checked = matches;
+        const card = radio.closest('.tow-card');
+        if (card) {
+          if (matches) {
+            card.classList.add('border-2', 'border-valoriza-blue', 'bg-valoriza-blueLight/50');
+            card.classList.remove('border-slate-200', 'bg-white');
+          } else {
+            card.classList.remove('border-2', 'border-valoriza-blue', 'bg-valoriza-blueLight/50');
+            card.classList.add('border-slate-200', 'bg-white');
+          }
+        }
+      });
+
+      // 3. Opcionais
+      const recommendedExtraIds = Array.isArray(plan.opcionais) 
+        ? plan.opcionais.map(o => (typeof o === 'string' ? o : o.id || o.title || '').toLowerCase())
+        : [];
+
+      extraCheckboxes.forEach(cb => {
+        const cbId = (cb.getAttribute('data-id') || '').toLowerCase();
+        const cbTitle = (cb.getAttribute('data-title') || '').toLowerCase();
+        const isSelected = recommendedExtraIds.some(rec => 
+          rec === cbId || cbTitle.includes(rec) || rec.includes(cbId)
+        );
+
+        cb.checked = isSelected;
+        const card = cb.closest('.extra-card');
+        if (card) {
+          if (isSelected) {
+            card.classList.add('border-2', 'border-valoriza-blue', 'bg-valoriza-blueLight/30');
+            card.classList.remove('border-slate-200', 'bg-white');
+          } else {
+            card.classList.remove('border-2', 'border-valoriza-blue', 'bg-valoriza-blueLight/30');
+            card.classList.add('border-slate-200', 'bg-white');
+          }
+        }
+      });
+
+      // Recalcula totais no manual
+      recalculatePlan();
+
+      // Muda para aba manual e rola a tela
+      switchMode('manual');
+      scrollToQuote();
+    }
+
+    // Envio de Mensagem do Chat
+    if (chatForm) {
+      chatForm.addEventListener('submit', (e) => {
+        e.preventDefault();
+        handleChatSubmit();
+      });
+    }
+
+    async function handleChatSubmit() {
+      const text = chatInputText.value.trim();
+      if (!text || isWaitingForAi) return;
+
+      appendUserMessage(text);
+      chatInputText.value = '';
+      chatQuickReplies.classList.add('hidden');
+
+      chatHistory.push({ role: 'user', content: text });
+      chatConversationTurn++;
+
+      // Exibe indicador de digitação
+      isWaitingForAi = true;
+      chatTypingIndicator.classList.remove('hidden');
+      scrollChatToBottom();
+
+      try {
+        const aiResponse = await sendChatMessageToAi(text);
+        
+        chatTypingIndicator.classList.add('hidden');
+        isWaitingForAi = false;
+
+        chatHistory.push({ role: 'model', content: aiResponse.reply });
+        appendAiMessage(aiResponse.reply, aiResponse.plano);
+
+        if (aiResponse.quickReplies && aiResponse.quickReplies.length > 0) {
+          renderQuickReplies(aiResponse.quickReplies);
+        }
+      } catch (err) {
+        console.error('Erro na resposta do chat:', err);
+        chatTypingIndicator.classList.add('hidden');
+        isWaitingForAi = false;
+        appendAiMessage('Tive uma breve oscilação na resposta, mas estou aqui! Me conte: qual o seu carro e se você roda apenas na cidade ou pega estrada?');
+      }
+    }
+
+    // Comunicação: Webhook N8N com Fallback para Motor Inteligente Local
+    async function sendChatMessageToAi(userText) {
+      const webhookUrl = (typeof N8N_CONFIG !== 'undefined' && N8N_CONFIG.chatWebhookUrl) 
+        || localStorage.getItem('valoriza_n8n_chat_webhook_url');
+
+      if (webhookUrl && webhookUrl.startsWith('http')) {
+        try {
+          const controller = new AbortController();
+          const timeoutId = setTimeout(() => controller.abort(), 12000);
+
+          const response = await fetch(webhookUrl, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              message: userText,
+              history: chatHistory,
+              userName: nameInput.value.trim(),
+              userPhone: phoneInput.value.trim()
+            }),
+            signal: controller.signal
+          });
+          clearTimeout(timeoutId);
+
+          if (response.ok) {
+            const data = await response.json();
+            if (data && (data.reply || data.output)) {
+              return {
+                reply: data.reply || data.output,
+                plano: data.plano || null,
+                quickReplies: data.finalizado ? [] : ['Sim, gostei', 'Quero mudar algo', 'Ver no simulador']
+              };
+            }
+          }
+        } catch (err) {
+          console.warn('Webhook do N8N não respondeu ou demorou. Ativando motor especialista local da Valéria.', err);
+        }
+      }
+
+      // Motor Local Especialista de Conversação da Valéria
+      await new Promise(res => setTimeout(res, 900)); // Pequeno delay humano
+      return generateLocalAiReply(userText);
+    }
+
+    // Motor Especialista Local da Valéria (Baseado na tabela oficial de planos)
+    function generateLocalAiReply(text) {
+      const lower = text.toLowerCase();
+
+      // Extrai possíveis informações
+      if (lower.includes('uber') || lower.includes('99') || lower.includes('app') || lower.includes('passageiro') || lower.includes('entrega')) {
+        userVehicleProfile.usage = 'uber';
+      } else if (lower.includes('viagem') || lower.includes('viajar') || lower.includes('estrada') || lower.includes('rodovia') || lower.includes('km')) {
+        userVehicleProfile.usage = 'viagem';
+      } else if (lower.includes('cidade') || lower.includes('urbano') || lower.includes('dia a dia') || lower.includes('trabalho')) {
+        userVehicleProfile.usage = 'cidade';
+      }
+
+      if (lower.includes('carro reserva') || lower.includes('reserva') || lower.includes('não posso ficar sem') || lower.includes('completo')) {
+        userVehicleProfile.wantsReserva = true;
+      }
+      if (lower.includes('terceiro') || lower.includes('bater') || lower.includes('completo')) {
+        userVehicleProfile.wantsTerceiros = true;
+      }
+      if (lower.includes('vidro') || lower.includes('farol') || lower.includes('para-brisa') || lower.includes('completo')) {
+        userVehicleProfile.wantsVidros = true;
+      }
+
+      // Turno 1: Descoberta de uso e rotina
+      if (chatConversationTurn <= 1 && !userVehicleProfile.usage) {
+        return {
+          reply: `Excelente! 🚗 Anotei por aqui.\n\nPara eu calibrar o alcance de guincho e as assistências ideais: **como é a sua rotina com o veículo?** Você roda mais na cidade, costuma viajar aos finais de semana, ou trabalha com transporte de passageiros (Uber/99)?`,
+          plano: null,
+          quickReplies: [
+            'Rodo somente na cidade',
+            'Trabalho com Uber / 99',
+            'Faço viagens frequentes com a família'
+          ]
+        };
+      }
+
+      // Turno 2: Preferências de Coberturas Chave (Carro Reserva e Terceiros)
+      if (chatConversationTurn === 2 && (userVehicleProfile.wantsReserva === null || userVehicleProfile.wantsTerceiros === null)) {
+        return {
+          reply: `Perfeito! Já estou definindo a melhor quilometragem de reboque para o seu perfil. 🛡️\n\nAgora sobre a sua tranquilidade: você gostaria de incluir **Carro Reserva** (para não ficar a pé durante eventuais consertos) e **Cobertura para Danos a Terceiros**?`,
+          plano: null,
+          quickReplies: [
+            'Sim, quero Carro Reserva e Terceiros',
+            'Apenas o plano mais econômico',
+            'Quero o pacote completo com vidros'
+          ]
+        };
+      }
+
+      // Turno 3 ou Decisão: Formular Plano Recomendado
+      let fipeFaixa = 'Até R$ 50 mil';
+      let fipeAdicional = 0;
+      if (lower.includes('80') || lower.includes('suv') || lower.includes('compass') || lower.includes('corolla') || lower.includes('civic') || lower.includes('t-cross')) {
+        fipeFaixa = 'De R$ 50 mil a R$ 80 mil';
+        fipeAdicional = 25;
+      }
+
+      let reboque = 'Reboque 100 km';
+      let reboqueValor = 0;
+      let opcionais = [];
+      let justificativa = '';
+
+      if (userVehicleProfile.usage === 'uber') {
+        reboque = 'Reboque 200 km';
+        reboqueValor = 14.90;
+        opcionais.push({ id: 'app-driver', title: 'Pacote Motorista de App / Entregador', price: 29.90 });
+        opcionais.push({ id: 'reserva-7', title: 'Carro Reserva 7 dias', price: 18.00 });
+        opcionais.push({ id: 'terceiros-50', title: 'Danos a Terceiros R$ 50.000', price: 24.90 });
+        opcionais.push({ id: 'vidros', title: 'Proteção de Vidros Completa', price: 19.90 });
+        justificativa = 'Montei uma proteção especial para quem trabalha com o carro: cobertura ampliada para terceiros (R$ 50 mil), carro reserva para não perder dias de faturamento e pacote específico para motorista de aplicativo.';
+      } else if (userVehicleProfile.usage === 'viagem' || lower.includes('viagen') || lower.includes('estrada')) {
+        reboque = 'Reboque 500 km';
+        reboqueValor = 29.90;
+        opcionais.push({ id: 'vidros', title: 'Proteção de Vidros Completa', price: 19.90 });
+        opcionais.push({ id: 'reserva-7', title: 'Carro Reserva 7 dias', price: 18.00 });
+        opcionais.push({ id: 'terceiros-50', title: 'Danos a Terceiros R$ 50.000', price: 24.90 });
+        opcionais.push({ id: 'combustivel', title: 'Auxílio Combustível', price: 6.90 });
+        justificativa = 'Para quem viaja em rodovias, o reboque de 500 km garante resgate mesmo longe de casa, além de proteção completa de vidros/retrovisores e socorro para pane seca.';
+      } else if (lower.includes('econômico') || lower.includes('economico') || lower.includes('apenas o essencial')) {
+        reboque = 'Reboque 100 km';
+        reboqueValor = 0;
+        opcionais.push({ id: 'vidros', title: 'Proteção de Vidros Completa', price: 19.90 });
+        justificativa = 'Foco total em economia sem abrir mão do indispensável: Roubo, Furto, Colisão, Danos da Natureza e Vidros pelo menor custo mensal.';
+      } else {
+        // Padrão equilibrado (O mais popular da Valoriza Car)
+        reboque = 'Reboque 200 km';
+        reboqueValor = 14.90;
+        opcionais.push({ id: 'vidros', title: 'Proteção de Vidros Completa', price: 19.90 });
+        opcionais.push({ id: 'reserva-7', title: 'Carro Reserva 7 dias', price: 18.00 });
+        opcionais.push({ id: 'terceiros-30', title: 'Danos a Terceiros R$ 30.000', price: 16.90 });
+        justificativa = 'Nosso plano campeão de escolha: cobre deslocamentos na cidade e escapadas no fim de semana, com carro reserva e proteção para terceiros caso ocorra algum imprevisto.';
+      }
+
+      const totalExtras = opcionais.reduce((sum, item) => sum + item.price, 0);
+      const totalFinal = Math.round((BASE_PRICE + fipeAdicional + reboqueValor + totalExtras) * 100) / 100;
+
+      const planData = {
+        finalizado: true,
+        fipe_faixa: fipeFaixa,
+        fipe_adicional: fipeAdicional,
+        reboque: reboque,
+        reboque_valor: reboqueValor,
+        opcionais: opcionais,
+        valor_total: totalFinal,
+        justificativa: justificativa
+      };
+
+      return {
+        reply: `Prontinho! Analisei o seu perfil e estruturei a melhor proposta para você com ótimo custo-benefício. 🚗✨\n\nConfira os detalhes abaixo no cartão que acabei de gerar. Você pode garantir este plano diretamente no WhatsApp ou clicar para ajustar cada item no simulador manual:`,
+        plano: planData,
+        quickReplies: []
+      };
     }
 
     // Inicializa estado da página
